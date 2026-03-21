@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Card hover effect */
+.card-hover {
+  @apply transition-all duration-200 cursor-pointer;
+}
+.card-hover:hover {
+  @apply -translate-y-1 shadow-lg shadow-wolf-accent/20;
+}
+
+/* HP bar */
+.hp-bar {
+  @apply h-2 rounded-full transition-all duration-500;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+::-webkit-scrollbar-thumb {
+  background: #0f3460;
+  border-radius: 3px;
+}
