@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { initDiscord, getAvatarUrl, type DiscordAuth } from './discord/setup';
 import { connectToGame, emitJoin } from './discord/socket';
 import { useGameStore } from './stores/gameStore';
@@ -18,12 +18,17 @@ function App() {
   const [showFactionReveal, setShowFactionReveal] = useState(false);
   const [prevPhase, setPrevPhase] = useState<string | null>(null);
 
+  const hasInitialized = useRef(false);
+
   const publicState = useGameStore((s) => s.publicState);
   const privateState = useGameStore((s) => s.privateState);
   const phase = publicState?.phase ?? 'LOBBY';
 
   // Initialize Discord SDK or dev mode
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     async function init() {
       try {
         // Check if running inside Discord
