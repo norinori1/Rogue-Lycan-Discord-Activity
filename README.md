@@ -87,10 +87,13 @@ rogue-lycan/
      - `/api` → `https://<backend-domain>/api`
      - `/socket.io` → `https://<backend-domain>/socket.io`
 
+cmd でngrok http 3001 を実行してローカルサーバーを公開し、ngrok の URL を Discord の URL Mappings に設定してください。
+
+
 ### 2. 環境変数の設定
 
 ```bash
-cp .env.example .env
+
 ```
 
 `.env` を編集して Discord の Client ID と Client Secret を設定:
