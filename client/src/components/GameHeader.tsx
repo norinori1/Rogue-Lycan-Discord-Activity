@@ -12,6 +12,7 @@ const PHASE_LABELS: Record<string, string> = {
 export function GameHeader() {
   const publicState = useGameStore((s) => s.publicState);
   const privateState = useGameStore((s) => s.privateState);
+  const myName = useGameStore((s) => s.myName);
   const [timeLeft, setTimeLeft] = useState(0);
 
   useEffect(() => {
@@ -43,6 +44,11 @@ export function GameHeader() {
         <span className="text-sm text-gray-400">
           {publicState.turn > 0 && `${publicState.turn}日目`}
         </span>
+        {myName && (
+          <span className="text-xs text-gray-300 border border-wolf-light/40 rounded px-1.5 py-0.5">
+            {myName}
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-4">
         <span className="text-sm font-medium">

@@ -86,6 +86,17 @@ export class GameManager {
     this.onStateUpdate?.();
   }
 
+  renamePlayer(playerId: string, newName: string): void {
+    if (this.state.phase !== 'LOBBY') return;
+    if (this.readyPlayers.has(playerId)) return;
+    const player = this.state.players.find((p) => p.id === playerId);
+    if (!player) return;
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    player.name = trimmed;
+    this.onStateUpdate?.();
+  }
+
   setReady(playerId: string): void {
     if (this.state.phase !== 'LOBBY') return;
     this.readyPlayers.add(playerId);

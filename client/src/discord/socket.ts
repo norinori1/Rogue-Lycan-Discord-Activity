@@ -83,6 +83,10 @@ export function emitJoin(name: string, avatarUrl: string): void {
   socket?.emit('player:join', { name, avatarUrl });
 }
 
+export function emitRename(name: string): void {
+  socket?.emit('player:rename', { name });
+}
+
 export function emitReady(): void {
   socket?.emit('player:ready');
 }
