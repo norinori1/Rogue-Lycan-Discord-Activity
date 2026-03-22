@@ -49,6 +49,7 @@ interface GameStore {
 
   // Actions
   setConnection: (playerId: string, name: string) => void;
+  setMyName: (name: string) => void;
   setPublicState: (state: PublicGameState) => void;
   setPrivateState: (state: PrivatePlayerState) => void;
   setPhase: (phase: Phase, deadline: number) => void;
@@ -89,6 +90,8 @@ export const useGameStore = create<GameStore>((set) => ({
 
   setConnection: (playerId, name) =>
     set({ myPlayerId: playerId, myName: name, isConnected: true }),
+
+  setMyName: (name) => set({ myName: name }),
 
   setPublicState: (state) => set({ publicState: state }),
 

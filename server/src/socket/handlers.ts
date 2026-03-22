@@ -40,6 +40,11 @@ export function setupSocketHandlers(io: Server): void {
       broadcastState(game, io);
     });
 
+    socket.on('player:rename', (data: { name: string }) => {
+      game.renamePlayer(playerId, data.name);
+      broadcastState(game, io);
+    });
+
     socket.on('player:ready', () => {
       game.setReady(playerId);
       broadcastState(game, io);

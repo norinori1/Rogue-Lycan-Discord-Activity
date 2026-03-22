@@ -25,6 +25,7 @@ export function PlayerList({ selectable, onSelect, selectedId, showVotes }: Prop
         <PlayerRow
           key={player.id}
           player={player}
+          isMe={player.id === myPlayerId}
           selectable={selectable}
           selected={selectedId === player.id}
           onClick={() => onSelect?.(player.id)}
@@ -37,13 +38,14 @@ export function PlayerList({ selectable, onSelect, selectedId, showVotes }: Prop
 
 interface RowProps {
   player: PublicPlayer;
+  isMe?: boolean;
   selectable?: boolean;
   selected?: boolean;
   onClick?: () => void;
   votes?: number;
 }
 
-function PlayerRow({ player, selectable, selected, onClick, votes }: RowProps) {
+function PlayerRow({ player, isMe, selectable, selected, onClick, votes }: RowProps) {
   const hpPercent = Math.max(0, (player.hp / 3) * 100);
   const hpColor =
     player.hp > 1 ? 'bg-green-500' : player.hp === 1 ? 'bg-yellow-500' : 'bg-red-500';
@@ -65,6 +67,7 @@ function PlayerRow({ player, selectable, selected, onClick, votes }: RowProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium truncate">{player.name}</span>
+          {isMe && <span className="text-xs text-wolf-gold">(あなた)</span>}
           {!player.isAlive && <span className="text-xs text-red-400">脱落</span>}
         </div>
         <div className="flex items-center gap-2 mt-1">
