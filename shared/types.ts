@@ -37,7 +37,7 @@ export interface CardInstance {
 }
 
 export const CARD_WEIGHTS: Record<CardId, number> = {
-  KILL: 3,
+  KILL: 7,
   KNIGHT: 3,
   DOCTOR: 3,
   ORACLE: 3,

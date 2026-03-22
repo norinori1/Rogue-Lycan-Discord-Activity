@@ -347,7 +347,17 @@ export class GameManager {
     this.onStateUpdate?.();
 
     this.phaseTimer = setTimeout(() => {
-      this.transitionTo('DAY_VOTE');
+      // Skip voting after the first discussion (turn 1)
+      if (this.state.turn === 1) {
+        // Reset vote weights for all alive players
+        for (const player of this.state.players) {
+          player.voteWeight = player.isAlive ? 1 : 0;
+        }
+        this.state.turn++;
+        this.transitionTo('NIGHT_BUILD');
+      } else {
+        this.transitionTo('DAY_VOTE');
+      }
     }, GAME_CONSTANTS.DAY_DISCUSSION_TIME);
   }
 
