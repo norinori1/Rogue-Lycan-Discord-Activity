@@ -3,6 +3,7 @@ import { initDiscord, getAvatarUrl, type DiscordAuth } from './discord/setup';
 import { connectToGame, emitJoin } from './discord/socket';
 import { useGameStore } from './stores/gameStore';
 import { Lobby } from './components/Lobby';
+import { RoomSelector } from './components/RoomSelector';
 import { FactionReveal } from './components/FactionReveal';
 import { NightBuild } from './components/NightBuild';
 import { NightAction } from './components/NightAction';
@@ -17,11 +18,16 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [showFactionReveal, setShowFactionReveal] = useState(false);
   const [prevPhase, setPrevPhase] = useState<string | null>(null);
+  const [resolvedRoomId, setResolvedRoomId] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [isDiscordMode, setIsDiscordMode] = useState(false);
 
   const hasInitialized = useRef(false);
 
   const publicState = useGameStore((s) => s.publicState);
   const privateState = useGameStore((s) => s.privateState);
+  const myPlayerId = useGameStore((s) => s.myPlayerId);
+  const myName = useGameStore((s) => s.myName);
   const phase = publicState?.phase ?? 'LOBBY';
 
   // Initialize Discord SDK or dev mode
@@ -35,15 +41,16 @@ function App() {
         const isDiscord = window.location.href.includes('discordsays');
 
         if (isDiscord) {
+          setIsDiscordMode(true);
           const auth = await initDiscord();
-          const avatarUrl = getAvatarUrl(auth.user.id, auth.user.avatar);
+          const resolvedAvatarUrl = getAvatarUrl(auth.user.id, auth.user.avatar);
           const name = auth.user.global_name || auth.user.username;
 
           useGameStore.getState().setConnection(auth.user.id, name);
+          setAvatarUrl(resolvedAvatarUrl);
 
           const roomId = auth.channelId || 'default-room';
-          connectToGame(roomId, auth.user.id);
-          emitJoin(name, avatarUrl);
+          setResolvedRoomId(roomId);
         } else {
           // Dev mode: generate random player
           const devId = `dev-${Math.random().toString(36).substring(2, 8)}`;
@@ -51,9 +58,10 @@ function App() {
 
           useGameStore.getState().setConnection(devId, devName);
 
-          const roomId = new URLSearchParams(window.location.search).get('room') || 'dev-room';
-          connectToGame(roomId, devId);
-          emitJoin(devName, '');
+          const roomId = new URLSearchParams(window.location.search).get('room');
+          if (roomId) {
+            setResolvedRoomId(roomId);
+          }
         }
 
         setLoading(false);
@@ -66,6 +74,13 @@ function App() {
 
     init();
   }, []);
+
+  useEffect(() => {
+    if (!resolvedRoomId) return;
+    if (!myPlayerId || !myName) return;
+    connectToGame(resolvedRoomId, myPlayerId);
+    emitJoin(myName, avatarUrl);
+  }, [resolvedRoomId, avatarUrl, myPlayerId, myName]);
 
   // Show faction reveal when game starts (transition from LOBBY to NIGHT_BUILD)
   useEffect(() => {
@@ -107,6 +122,16 @@ function App() {
 
   if (showFactionReveal && privateState) {
     return <FactionReveal faction={privateState.faction} />;
+  }
+
+  if (!isDiscordMode && !resolvedRoomId) {
+    return (
+      <RoomSelector
+        playerName={myName ?? 'Player'}
+        selectedRoomId=""
+        onJoinRoom={(roomId) => setResolvedRoomId(roomId)}
+      />
+    );
   }
 
   return (

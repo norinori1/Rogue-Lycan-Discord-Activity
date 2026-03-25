@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { setupSocketHandlers } from './socket/handlers.js';
+import { setupSocketHandlers, getRoomSummaries } from './socket/handlers.js';
 
 dotenv.config();
 
@@ -24,6 +24,15 @@ app.use(express.json());
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
+});
+
+app.get('/api/rooms', (_req, res) => {
+  try {
+    res.json({ rooms: getRoomSummaries() });
+  } catch (error) {
+    console.error('[Rooms] Failed to get room summaries:', error);
+    res.status(500).json({ error: 'Failed to get rooms' });
+  }
 });
 
 // OAuth token exchange endpoint

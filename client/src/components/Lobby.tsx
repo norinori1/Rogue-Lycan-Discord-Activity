@@ -182,7 +182,7 @@ function RulesModal({ onClose }: { onClose: () => void }) {
             <h3 className="text-base font-bold text-wolf-gold mb-2">📊 基本パラメーター</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               {[
-                ['プレイヤー数', '4〜6人'],
+                ['プレイヤー数', `4〜${GAME_CONSTANTS.MAX_PLAYERS}人`],
                 ['初期HP', '2'],
                 ['最大手札枚数', '5枚'],
                 ['人狼の数', '人数 ÷ 3（切り捨て）'],
