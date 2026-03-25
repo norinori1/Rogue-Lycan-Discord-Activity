@@ -3,6 +3,22 @@ import { GameManager } from '../game/GameManager.js';
 
 const rooms = new Map<string, GameManager>();
 
+export interface RoomSummary {
+  roomId: string;
+  playerCount: number;
+  phase: string;
+}
+
+export function getRoomSummaries(): RoomSummary[] {
+  return Array.from(rooms.entries())
+    .map(([roomId, game]) => ({
+      roomId,
+      playerCount: game.players.length,
+      phase: game.phase,
+    }))
+    .sort((a, b) => a.roomId.localeCompare(b.roomId));
+}
+
 export function setupSocketHandlers(io: Server): void {
   io.on('connection', (socket: Socket) => {
     const roomId = socket.handshake.query.roomId as string;

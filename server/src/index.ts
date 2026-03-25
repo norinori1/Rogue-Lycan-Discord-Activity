@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { setupSocketHandlers } from './socket/handlers.js';
+import { setupSocketHandlers, getRoomSummaries } from './socket/handlers.js';
 
 dotenv.config();
 
@@ -24,6 +24,10 @@ app.use(express.json());
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
+});
+
+app.get('/api/rooms', (_req, res) => {
+  res.json({ rooms: getRoomSummaries() });
 });
 
 // OAuth token exchange endpoint
