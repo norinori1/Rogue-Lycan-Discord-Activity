@@ -4,7 +4,7 @@ import {
   CARD_WEIGHTS,
   CARD_DEFINITIONS,
   CardDefinition,
-} from '../../../shared/types';
+} from '../../../shared/types.js';
 import { randomUUID } from 'crypto';
 
 // Build weighted pool for random draws

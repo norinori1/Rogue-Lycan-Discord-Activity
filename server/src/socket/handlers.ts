@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import { GameManager } from '../game/GameManager';
+import { GameManager } from '../game/GameManager.js';
 
 const rooms = new Map<string, GameManager>();
 

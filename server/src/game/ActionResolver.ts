@@ -5,8 +5,8 @@ import {
   GameLog,
   CARD_DEFINITIONS,
   GAME_CONSTANTS,
-} from '../../../shared/types';
-import { drawRandomCardInstance } from './CardEngine';
+} from '../../../shared/types.js';
+import { drawRandomCardInstance } from './CardEngine.js';
 
 interface ResolveResult {
   events: MorningEvent[];
