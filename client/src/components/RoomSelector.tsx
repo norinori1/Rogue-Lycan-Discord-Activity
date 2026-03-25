@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GAME_CONSTANTS } from '@shared/types';
 
-const ROOM_LIST_REFRESH_INTERVAL_MS = 10000;
+const REFRESH_INTERVAL_MS = 10000;
 
 interface RoomSummary {
   roomId: string;
@@ -45,6 +45,7 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
       const data = (await response.json()) as { rooms?: RoomSummary[] };
       setRooms(data.rooms ?? []);
     } catch {
+      console.error('[RoomSelector] Failed to load rooms');
       setError('ルーム一覧の取得に失敗しました');
     } finally {
       setLoading(false);
@@ -53,7 +54,7 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
 
   useEffect(() => {
     loadRooms();
-    const timer = setInterval(loadRooms, ROOM_LIST_REFRESH_INTERVAL_MS);
+    const timer = setInterval(loadRooms, REFRESH_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [loadRooms]);
 
