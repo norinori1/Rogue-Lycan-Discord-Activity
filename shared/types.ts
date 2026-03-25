@@ -241,7 +241,7 @@ export interface PlayerAction {
 
 export const GAME_CONSTANTS = {
   MIN_PLAYERS: 4,
-  MAX_PLAYERS: 12,
+  MAX_PLAYERS: 6,
   MAX_STACK_SIZE: 5,
   STARTING_HP: 2,
   STARTING_MAX_HP: 2,

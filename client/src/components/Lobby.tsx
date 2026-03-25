@@ -182,7 +182,7 @@ function RulesModal({ onClose }: { onClose: () => void }) {
             <h3 className="text-base font-bold text-wolf-gold mb-2">📊 基本パラメーター</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               {[
-                ['プレイヤー数', `4〜${GAME_CONSTANTS.MAX_PLAYERS}人（偶数）`],
+                ['プレイヤー数', `4〜${GAME_CONSTANTS.MAX_PLAYERS}人`],
                 ['初期HP', '2'],
                 ['最大手札枚数', '5枚'],
                 ['人狼の数', '人数 ÷ 3（切り捨て）'],
@@ -319,7 +319,6 @@ export function Lobby() {
   const isReady = myPlayerId ? readyPlayers.includes(myPlayerId) : false;
   const canStart =
     players.length >= GAME_CONSTANTS.MIN_PLAYERS &&
-    players.length % 2 === 0 &&
     readyPlayers.length === players.length;
 
   const handleNameEdit = () => {
@@ -424,11 +423,6 @@ export function Lobby() {
               {players.length < GAME_CONSTANTS.MIN_PLAYERS && (
                 <p className="text-center text-gray-500 text-sm py-2">
                   あと{GAME_CONSTANTS.MIN_PLAYERS - players.length}人必要です
-                </p>
-              )}
-              {players.length >= GAME_CONSTANTS.MIN_PLAYERS && players.length % 2 !== 0 && (
-                <p className="text-center text-gray-500 text-sm py-2">
-                  ゲーム開始には偶数人数（2ペア以上）が必要です
                 </p>
               )}
             </div>

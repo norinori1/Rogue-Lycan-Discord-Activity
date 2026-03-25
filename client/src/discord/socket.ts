@@ -9,14 +9,25 @@ import type {
 } from '@shared/types';
 
 let socket: Socket | null = null;
+let connectedRoomId: string | null = null;
+let connectedPlayerId: string | null = null;
 
 export function getSocket(): Socket | null {
   return socket;
 }
 
 export function connectToGame(roomId: string, playerId: string): Socket {
-  if (socket?.connected) {
+  if (
+    socket?.connected &&
+    connectedRoomId === roomId &&
+    connectedPlayerId === playerId
+  ) {
     return socket;
+  }
+
+  if (socket) {
+    socket.disconnect();
+    socket = null;
   }
 
   const isDiscord = window.location.href.includes('discordsays');
@@ -31,6 +42,8 @@ export function connectToGame(roomId: string, playerId: string): Socket {
     query: { roomId, playerId },
     transports: ['websocket'],
   });
+  connectedRoomId = roomId;
+  connectedPlayerId = playerId;
 
   const store = useGameStore.getState();
 
