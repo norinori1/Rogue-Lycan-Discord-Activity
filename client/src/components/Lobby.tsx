@@ -185,7 +185,7 @@ function RulesModal({ onClose }: { onClose: () => void }) {
                 ['プレイヤー数', `4〜${GAME_CONSTANTS.MAX_PLAYERS}人（偶数）`],
                 ['初期HP', '2'],
                 ['最大手札枚数', '5枚'],
-                ['人狼の数', '人数 ÷ 2（各ペア1人）'],
+                ['人狼の数', '人数 ÷ 3（切り捨て）'],
               ].map(([label, value]) => (
                 <div key={label} className="bg-wolf-mid rounded-lg p-3">
                   <div className="text-gray-400 text-xs mb-1">{label}</div>

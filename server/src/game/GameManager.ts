@@ -103,10 +103,13 @@ export class GameManager {
     this.onStateUpdate?.();
 
     const playerCount = this.state.players.length;
-    const hasMinimumPairs = playerCount / 2 >= GAME_CONSTANTS.MIN_PAIRS;
     const isEvenPlayers = playerCount % 2 === 0;
 
-    if (hasMinimumPairs && isEvenPlayers && this.readyPlayers.size === playerCount) {
+    if (
+      playerCount >= GAME_CONSTANTS.MIN_PLAYERS &&
+      isEvenPlayers &&
+      this.readyPlayers.size === playerCount
+    ) {
       this.startGame();
     }
   }
