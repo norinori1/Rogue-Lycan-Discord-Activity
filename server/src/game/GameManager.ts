@@ -12,9 +12,9 @@ import {
   CardDefinition,
   OracleResult,
   GAME_CONSTANTS,
-} from '../../../shared/types';
-import { drawCards, createCardInstance } from './CardEngine';
-import { resolveActions } from './ActionResolver';
+} from '../../../shared/types.js';
+import { drawCards, createCardInstance } from './CardEngine.js';
+import { resolveActions } from './ActionResolver.js';
 
 export class GameManager {
   private state: GameState;
