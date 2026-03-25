@@ -4,6 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/Rogue-Lycan-Discord-Activity/',
   resolve: {
     alias: {
       '@shared': path.resolve(__dirname, '../shared'),
