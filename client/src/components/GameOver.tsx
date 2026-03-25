@@ -1,4 +1,5 @@
 import { useGameStore } from '../stores/gameStore';
+import { emitRestart } from '../discord/socket';
 
 export function GameOver() {
   const gameOverInfo = useGameStore((s) => s.gameOverInfo);
@@ -66,7 +67,7 @@ export function GameOver() {
       </div>
 
       <button
-        onClick={() => window.location.reload()}
+        onClick={() => emitRestart()}
         className="mt-8 px-6 py-3 rounded-lg font-bold bg-wolf-accent hover:bg-red-600 transition"
       >
         もう一度遊ぶ

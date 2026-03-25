@@ -116,3 +116,7 @@ export function emitActionSkip(): void {
 export function emitVote(targetId: string): void {
   socket?.emit('vote:cast', { targetId });
 }
+
+export function emitRestart(): void {
+  socket?.emit('game:restart');
+}

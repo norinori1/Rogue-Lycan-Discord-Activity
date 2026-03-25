@@ -80,7 +80,7 @@ export class GameManager {
   }
 
   removePlayer(id: string): void {
-    if (this.state.phase !== 'LOBBY') return;
+    if (this.state.phase !== 'LOBBY' && this.state.phase !== 'GAME_OVER') return;
     this.state.players = this.state.players.filter((p) => p.id !== id);
     this.readyPlayers.delete(id);
     this.onStateUpdate?.();
@@ -529,6 +529,61 @@ export class GameManager {
 
   getReadyPlayers(): Set<string> {
     return this.readyPlayers;
+  }
+
+  getGameOverInfo():
+    | {
+        winner: Faction;
+        players: { id: string; name: string; faction: Faction; isAlive: boolean }[];
+      }
+    | null {
+    if (this.state.phase !== 'GAME_OVER') return null;
+    const result = this.checkWinCondition();
+    if (!result) return null;
+    return {
+      winner: result.winner,
+      players: this.state.players.map((p) => ({
+        id: p.id,
+        name: p.name,
+        faction: p.faction,
+        isAlive: p.isAlive,
+      })),
+    };
+  }
+
+  restartToLobby(): boolean {
+    if (this.state.phase !== 'GAME_OVER') return false;
+
+    if (this.phaseTimer) {
+      clearTimeout(this.phaseTimer);
+      this.phaseTimer = null;
+    }
+
+    this.readyPlayers.clear();
+    this.buildSelections.clear();
+    this.buildOptionsMap.clear();
+    this.nightActions = [];
+    this.nightActionSubmitted.clear();
+    this.votes.clear();
+    this.oracleHistory.clear();
+
+    for (const player of this.state.players) {
+      player.hp = GAME_CONSTANTS.STARTING_HP;
+      player.maxHp = GAME_CONSTANTS.STARTING_MAX_HP;
+      player.faction = 'citizen';
+      player.stack = [];
+      player.voteWeight = 1;
+      player.isAlive = true;
+    }
+
+    this.state.phase = 'LOBBY';
+    this.state.turn = 0;
+    this.state.logs = [];
+    this.state.phaseDeadline = 0;
+
+    this.onPhaseChange?.('LOBBY', 0);
+    this.onStateUpdate?.();
+    return true;
   }
 
   destroy(): void {

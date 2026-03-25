@@ -32,6 +32,10 @@ export function setupSocketHandlers(io: Server): void {
     if (privateState) {
       socket.emit('state:private', privateState);
     }
+    const gameOverInfo = game.getGameOverInfo();
+    if (gameOverInfo) {
+      socket.emit('game:over', gameOverInfo);
+    }
 
     // ===== Event Handlers =====
 
@@ -48,6 +52,12 @@ export function setupSocketHandlers(io: Server): void {
     socket.on('player:ready', () => {
       game.setReady(playerId);
       broadcastState(game, io);
+    });
+
+    socket.on('game:restart', () => {
+      if (game.restartToLobby()) {
+        broadcastState(game, io);
+      }
     });
 
     socket.on('build:select', (data: { cardId: string }) => {
