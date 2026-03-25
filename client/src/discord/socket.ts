@@ -28,6 +28,8 @@ export function connectToGame(roomId: string, playerId: string): Socket {
   if (socket) {
     socket.disconnect();
     socket = null;
+    connectedRoomId = null;
+    connectedPlayerId = null;
   }
 
   const isDiscord = window.location.href.includes('discordsays');
