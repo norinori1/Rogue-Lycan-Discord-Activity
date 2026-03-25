@@ -30,3 +30,5 @@ npm-debug.log*
 
 # Vite
 client/.vite/
+# Compiled shared types
+shared/types.js
