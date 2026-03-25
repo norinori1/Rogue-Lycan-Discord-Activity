@@ -19,7 +19,13 @@ export function connectToGame(roomId: string, playerId: string): Socket {
     return socket;
   }
 
-  const url = import.meta.env.DEV ? 'http://localhost:3001' : '/.proxy';
+  const isDiscord = window.location.href.includes('discordsays');
+  let url = import.meta.env.VITE_SERVER_URL || 'https://rogue-lycan-discord-activity.onrender.com';
+  if (isDiscord) {
+    url = '/.proxy';
+  } else if (import.meta.env.DEV) {
+    url = 'http://localhost:3001';
+  }
 
   socket = io(url, {
     query: { roomId, playerId },
