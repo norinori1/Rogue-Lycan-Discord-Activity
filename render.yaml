@@ -1,14 +1,14 @@
 services:
   - type: web
     name: rogue-lycan-server
-    env: node
+    runtime: node
     rootDir: server
     buildCommand: npm install && npm run build
     startCommand: npm start
 
-  - type: static
+  - type: web
     name: rogue-lycan-client
-    env: static
+    runtime: static
     rootDir: client
     buildCommand: npm install && npm run build
     staticPublishPath: dist
