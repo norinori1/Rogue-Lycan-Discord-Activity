@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GAME_CONSTANTS } from '@shared/types';
+
+const ROOM_LIST_REFRESH_INTERVAL_MS = 10000;
 
 interface RoomSummary {
   roomId: string;
@@ -32,12 +34,14 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
     return import.meta.env.VITE_SERVER_URL || 'https://rogue-lycan-discord-activity.onrender.com';
   }, [isDiscord]);
 
-  async function loadRooms(): Promise<void> {
+  const loadRooms = useCallback(async (): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(`${baseUrl}/api/rooms`);
-      if (!response.ok) throw new Error('failed');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch rooms: ${response.status} ${response.statusText}`);
+      }
       const data = (await response.json()) as { rooms?: RoomSummary[] };
       setRooms(data.rooms ?? []);
     } catch {
@@ -45,19 +49,19 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
     } finally {
       setLoading(false);
     }
-  }
+  }, [baseUrl]);
 
   useEffect(() => {
     loadRooms();
-    const timer = setInterval(loadRooms, 5000);
+    const timer = setInterval(loadRooms, ROOM_LIST_REFRESH_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [baseUrl]);
+  }, [loadRooms]);
 
-  const createAndJoin = () => {
+  const createAndJoin = useCallback(() => {
     const id = newRoomId.trim();
     if (!id) return;
     onJoinRoom(id);
-  };
+  }, [newRoomId, onJoinRoom]);
 
   return (
     <div className="min-h-screen bg-wolf-dark flex items-center justify-center p-6">
@@ -103,26 +107,38 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
           <div className="text-sm text-gray-500 py-4">現在アクティブなルームはありません</div>
         ) : (
           <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-            {rooms.map((room) => (
-              <div
-                key={room.roomId}
-                className="flex items-center justify-between bg-wolf-dark/60 border border-wolf-light/30 rounded p-3"
-              >
-                <div>
-                  <div className="font-semibold text-sm">{room.roomId}</div>
-                  <div className="text-xs text-gray-400">
-                    {room.playerCount}人 / {phaseLabel(room.phase)}
-                  </div>
-                </div>
-                <button
-                  onClick={() => onJoinRoom(room.roomId)}
-                  disabled={room.phase !== 'LOBBY' || room.playerCount >= GAME_CONSTANTS.MAX_PLAYERS}
-                  className="px-3 py-1.5 text-xs rounded bg-wolf-accent hover:bg-red-600 disabled:bg-gray-700 disabled:text-gray-500 transition"
+            {rooms.map((room) => {
+              const isInLobby = room.phase === 'LOBBY';
+              const isFull = room.playerCount >= GAME_CONSTANTS.MAX_PLAYERS;
+              const isDisabled = !isInLobby || isFull;
+              const buttonTitle = !isInLobby
+                ? '進行中のルームには参加できません'
+                : isFull
+                ? '満員です'
+                : '参加';
+
+              return (
+                <div
+                  key={room.roomId}
+                  className="flex items-center justify-between bg-wolf-dark/60 border border-wolf-light/30 rounded p-3"
                 >
-                  参加
-                </button>
-              </div>
-            ))}
+                  <div>
+                    <div className="font-semibold text-sm">{room.roomId}</div>
+                    <div className="text-xs text-gray-400">
+                      {room.playerCount}人 / {phaseLabel(room.phase)}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => onJoinRoom(room.roomId)}
+                    disabled={isDisabled}
+                    title={buttonTitle}
+                    className="px-3 py-1.5 text-xs rounded bg-wolf-accent hover:bg-red-600 disabled:bg-gray-700 disabled:text-gray-500 transition"
+                  >
+                    参加
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
 

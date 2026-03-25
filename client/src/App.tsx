@@ -26,6 +26,8 @@ function App() {
 
   const publicState = useGameStore((s) => s.publicState);
   const privateState = useGameStore((s) => s.privateState);
+  const myPlayerId = useGameStore((s) => s.myPlayerId);
+  const myName = useGameStore((s) => s.myName);
   const phase = publicState?.phase ?? 'LOBBY';
 
   // Initialize Discord SDK or dev mode
@@ -75,11 +77,10 @@ function App() {
 
   useEffect(() => {
     if (!resolvedRoomId) return;
-    const { myPlayerId, myName } = useGameStore.getState();
     if (!myPlayerId || !myName) return;
     connectToGame(resolvedRoomId, myPlayerId);
     emitJoin(myName, avatarUrl);
-  }, [resolvedRoomId, avatarUrl]);
+  }, [resolvedRoomId, avatarUrl, myPlayerId, myName]);
 
   // Show faction reveal when game starts (transition from LOBBY to NIGHT_BUILD)
   useEffect(() => {
@@ -124,10 +125,9 @@ function App() {
   }
 
   if (!isDiscordMode && !resolvedRoomId) {
-    const myName = useGameStore.getState().myName ?? 'Player';
     return (
       <RoomSelector
-        playerName={myName}
+        playerName={myName ?? 'Player'}
         selectedRoomId=""
         onJoinRoom={(roomId) => setResolvedRoomId(roomId)}
       />

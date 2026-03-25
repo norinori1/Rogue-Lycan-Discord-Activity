@@ -27,7 +27,12 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.get('/api/rooms', (_req, res) => {
-  res.json({ rooms: getRoomSummaries() });
+  try {
+    res.json({ rooms: getRoomSummaries() });
+  } catch (error) {
+    console.error('[Rooms] Failed to get room summaries:', error);
+    res.status(500).json({ error: 'Failed to get rooms' });
+  }
 });
 
 // OAuth token exchange endpoint
