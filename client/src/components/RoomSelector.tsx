@@ -46,7 +46,7 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
       setRooms(data.rooms ?? []);
     } catch (error) {
       console.error('[RoomSelector] Failed to load rooms:', error);
-      setError('ルーム一覧の取得に失敗しました');
+      setError('サーバへの接続に失敗しました。サーバがスリープ中の場合はしばらくすると自動的に復旧します。');
     } finally {
       setLoading(false);
     }
