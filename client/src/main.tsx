@@ -7,9 +7,9 @@ const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
 
 if (GA_MEASUREMENT_ID) {
   window.dataLayer = window.dataLayer || [];
-  window.gtag = window.gtag || function gtag(...args: unknown[]) {
+  window.gtag = window.gtag || ((...args: unknown[]) => {
     window.dataLayer.push(args);
-  };
+  });
 
   const script = document.createElement('script');
   script.async = true;
@@ -17,6 +17,9 @@ if (GA_MEASUREMENT_ID) {
   script.onload = () => {
     window.gtag('js', new Date());
     window.gtag('config', GA_MEASUREMENT_ID, { send_page_view: true });
+  };
+  script.onerror = () => {
+    console.warn('Failed to load Google Analytics script.');
   };
   document.head.appendChild(script);
 }
