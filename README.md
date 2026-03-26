@@ -103,6 +103,7 @@ VITE_DISCORD_CLIENT_ID=your_client_id
 DISCORD_CLIENT_SECRET=your_client_secret
 PORT=3001
 CLIENT_URL=http://localhost:5173
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
 ### 3. 依存関係のインストール
@@ -155,3 +156,11 @@ npm start
 - クライアントは自分の手札のみ完全に受信（他プレイヤーの手札は枚数のみ）
 - Socket.IO によるリアルタイム通信
 - 各フェーズにタイマーがあり、タイムアウト時は自動処理
+
+## GA4（Google Analytics 4）設定
+
+1. Google Analytics で Web データストリームを作成し、測定 ID（`G-...`）を取得
+2. 環境変数 `VITE_GA_MEASUREMENT_ID` に測定 ID を設定してクライアントをデプロイ
+3. デプロイ後にサイトへアクセスし、GA4 管理画面の「リアルタイム」レポートで `page_view` が届くことを確認
+
+`VITE_GA_MEASUREMENT_ID` が未設定の場合、GA4 は読み込まれません。
