@@ -1,144 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
 import { emitReady, emitRename } from '../discord/socket';
-import { GAME_CONSTANTS, CARD_DEFINITIONS, type CardId } from '@shared/types';
-
-// ===== Card Showcase =====
-
-const ALL_CARD_IDS = Object.keys(CARD_DEFINITIONS) as CardId[];
-
-const ATTR_COLORS: Record<string, { border: string; bg: string; text: string; shadow: string }> = {
-  attack:       { border: 'border-red-500',    bg: 'bg-red-950/60',    text: 'text-red-400',    shadow: '0 0 40px rgba(239,68,68,0.45)' },
-  defense:      { border: 'border-blue-500',   bg: 'bg-blue-950/60',   text: 'text-blue-400',   shadow: '0 0 40px rgba(59,130,246,0.45)' },
-  heal:         { border: 'border-green-500',  bg: 'bg-green-950/60',  text: 'text-green-400',  shadow: '0 0 40px rgba(34,197,94,0.45)' },
-  investigate:  { border: 'border-purple-500', bg: 'bg-purple-950/60', text: 'text-purple-400', shadow: '0 0 40px rgba(168,85,247,0.45)' },
-  political:    { border: 'border-yellow-500', bg: 'bg-yellow-950/60', text: 'text-yellow-400', shadow: '0 0 40px rgba(234,179,8,0.45)' },
-  distribution: { border: 'border-cyan-500',   bg: 'bg-cyan-950/60',   text: 'text-cyan-400',   shadow: '0 0 40px rgba(6,182,212,0.45)' },
-  sabotage:     { border: 'border-orange-500', bg: 'bg-orange-950/60', text: 'text-orange-400', shadow: '0 0 40px rgba(249,115,22,0.45)' },
-};
-
-const ATTR_LABELS: Record<string, string> = {
-  attack: '攻撃', defense: '防御', heal: '回復', investigate: '調査',
-  political: '政治', distribution: '流通', sabotage: '妨害',
-};
-
-const ATTR_ICONS: Record<string, string> = {
-  attack: '⚔️', defense: '🛡️', heal: '💊', investigate: '🔮',
-  political: '🗳️', distribution: '📦', sabotage: '🎭',
-};
-
-const CARD_INTERVAL_MS = 4500;
-const FADE_MS = 500;
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
-function CardShowcase() {
-  const queueRef = useRef<CardId[]>(shuffleArray(ALL_CARD_IDS));
-  const [cardIndex, setCardIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setVisible(false);
-      setTimeout(() => {
-        setCardIndex((prev: number) => {
-          const next = prev + 1;
-          if (next >= queueRef.current.length) {
-            queueRef.current = shuffleArray(ALL_CARD_IDS);
-            return 0;
-          }
-          return next;
-        });
-        setVisible(true);
-      }, FADE_MS);
-    }, CARD_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, []);
-
-  const cardId: CardId = queueRef.current[cardIndex];
-  const def = CARD_DEFINITIONS[cardId];
-  if (!def) return null;
-
-  const mainAttr = def.attribute[0];
-  const c = ATTR_COLORS[mainAttr] ?? ATTR_COLORS.attack;
-
-  return (
-    <div className="flex flex-col items-center gap-3 select-none">
-      <span className="text-xs tracking-[0.3em] text-gray-500 uppercase">カード紹介</span>
-
-      {/* Card frame */}
-      <div
-        style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.96)',
-          transition: `opacity ${FADE_MS}ms ease, transform ${FADE_MS}ms ease`,
-          boxShadow: visible ? c.shadow : 'none',
-        }}
-        className={`w-44 rounded-2xl border-2 flex flex-col items-center gap-2 overflow-hidden ${c.border} ${c.bg}`}
-      >
-        {/* Art area */}
-        <div className="w-full h-36 flex items-center justify-center bg-black/30 border-b border-white/10 text-6xl">
-          {ATTR_ICONS[mainAttr] ?? '🃏'}
-        </div>
-
-        <div className="w-full px-4 pb-4 flex flex-col items-center gap-2">
-          {/* Name */}
-          <div className="font-bold text-lg text-center text-white leading-tight">{def.name}</div>
-
-          {/* Attributes */}
-          <div className="flex flex-wrap gap-1 justify-center">
-            {def.attribute.map((a: string) => (
-              <span
-                key={a}
-                className={`text-xs px-2 py-0.5 rounded-full border ${c.border} ${c.text} bg-black/20`}
-              >
-                {ATTR_LABELS[a]}
-              </span>
-            ))}
-          </div>
-
-          {/* Divider */}
-          <div className="w-full h-px bg-white/10" />
-
-          {/* Description */}
-          <div className="text-xs text-gray-300 text-center leading-relaxed">{def.description}</div>
-
-          {/* Rarity */}
-          <span
-            className={`text-xs px-2 py-0.5 rounded border font-bold ${
-              def.rarity === 'UR'
-                ? 'border-wolf-gold text-wolf-gold bg-yellow-900/20'
-                : def.rarity === 'R'
-                ? 'border-purple-400 text-purple-400 bg-purple-900/20'
-                : 'border-gray-600 text-gray-500'
-            }`}
-          >
-            {def.rarity}
-          </span>
-        </div>
-      </div>
-
-      {/* Dot indicators */}
-      <div className="flex gap-1">
-        {queueRef.current.map((id, i) => (
-          <div
-            key={`${id}-${i}`}
-            className={`rounded-full transition-all duration-300 ${
-              i === cardIndex ? 'w-4 h-1.5 bg-wolf-accent' : 'w-1.5 h-1.5 bg-gray-600'
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
+import { GAME_CONSTANTS, CARD_DEFINITIONS } from '@shared/types';
+import { CardShowcase } from './CardShowcase';
 
 // ===== Rules Modal =====
 
@@ -253,22 +117,17 @@ function RulesModal({ onClose }: { onClose: () => void }) {
           <section>
             <h3 className="text-base font-bold text-wolf-gold mb-2">🃏 カード一覧</h3>
             <div className="space-y-2">
-              {ALL_CARD_IDS.map((id: CardId) => {
-                const def = CARD_DEFINITIONS[id];
-                const mainAttr = def.attribute[0];
-                const c = ATTR_COLORS[mainAttr] ?? ATTR_COLORS.attack;
+              {Object.values(CARD_DEFINITIONS).map((def) => {
                 return (
                   <div
-                    key={id}
-                    className={`flex items-start gap-3 rounded-lg border p-3 text-xs ${c.border} ${c.bg}`}
+                    key={def.id}
+                    className="flex items-start gap-3 rounded-lg border p-3 text-xs border-wolf-light/40 bg-wolf-mid/60"
                   >
-                    <span className="text-lg flex-shrink-0 leading-none">{ATTR_ICONS[mainAttr] ?? '🃏'}</span>
+                    <span className="text-lg flex-shrink-0 leading-none">🃏</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="font-bold text-white text-sm">{def.name}</span>
-                        <span className={`text-xs ${c.text}`}>
-                          {def.attribute.map((a: string) => ATTR_LABELS[a]).join('・')}
-                        </span>
+                        <span className="text-xs text-gray-400">{def.attribute.join('・')}</span>
                       </div>
                       <div className="text-gray-400">{def.description}</div>
                     </div>
