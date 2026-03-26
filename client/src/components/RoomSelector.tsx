@@ -90,7 +90,7 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
              <button
                onClick={createAndJoin}
                disabled={isCreateAndJoinDisabled}
-               title={error ? 'サーバ起動待ち中は作成できません' : '作成して参加'}
+               title={error ? 'サーバ起動待ち中は作成できません' : undefined}
                className="px-4 py-2 rounded bg-wolf-accent hover:bg-red-600 disabled:bg-gray-700 disabled:text-gray-500 transition text-sm font-semibold"
              >
               作成して参加
