@@ -12,6 +12,8 @@ import { DayDiscussion } from './components/DayDiscussion';
 import { DayVote } from './components/DayVote';
 import { GameOver } from './components/GameOver';
 import { GameHeader } from './components/GameHeader';
+import { SpectatorView } from './components/SpectatorView';
+import { EliminatedPrompt } from './components/EliminatedPrompt';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -19,16 +21,56 @@ function App() {
   const [showFactionReveal, setShowFactionReveal] = useState(false);
   const [prevPhase, setPrevPhase] = useState<string | null>(null);
   const [resolvedRoomId, setResolvedRoomId] = useState<string | null>(null);
+  const [isSpectating, setIsSpectating] = useState(false);
+  const [showEliminatedPrompt, setShowEliminatedPrompt] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isDiscordMode, setIsDiscordMode] = useState(false);
 
   const hasInitialized = useRef(false);
+  const wasAlive = useRef<boolean | null>(null);
 
   const publicState = useGameStore((s) => s.publicState);
   const privateState = useGameStore((s) => s.privateState);
   const myPlayerId = useGameStore((s) => s.myPlayerId);
   const myName = useGameStore((s) => s.myName);
+  const isSpectator = useGameStore((s) => s.isSpectator);
   const phase = publicState?.phase ?? 'LOBBY';
+
+  // Detect when my player transitions from alive to eliminated (during an active game)
+  const myPlayer = publicState?.players.find((p) => p.id === myPlayerId);
+  const myPlayerIsAlive = myPlayer?.isAlive;
+  useEffect(() => {
+    if (myPlayerIsAlive === undefined || isSpectating || phase === 'LOBBY' || phase === 'GAME_OVER') return;
+
+    if (wasAlive.current === null) {
+      // First observation — record initial alive state
+      wasAlive.current = myPlayerIsAlive;
+      return;
+    }
+
+    if (wasAlive.current && !myPlayerIsAlive) {
+      // Transitioned from alive to dead
+      setShowEliminatedPrompt(true);
+    }
+    wasAlive.current = myPlayerIsAlive;
+  }, [myPlayerIsAlive, isSpectating, phase]);
+
+  // Reset wasAlive tracking when we (re)enter a room as a player
+  useEffect(() => {
+    if (phase === 'LOBBY') {
+      wasAlive.current = null;
+      setShowEliminatedPrompt(false);
+    }
+  }, [phase]);
+
+  const handleSpectate = () => {
+    setShowEliminatedPrompt(false);
+    setIsSpectating(true);
+  };
+
+  const handleLeave = () => {
+    window.location.reload();
+  };
 
   // Initialize Discord SDK or dev mode
   useEffect(() => {
@@ -78,9 +120,11 @@ function App() {
   useEffect(() => {
     if (!resolvedRoomId) return;
     if (!myPlayerId || !myName) return;
-    connectToGame(resolvedRoomId, myPlayerId);
-    emitJoin(myName, avatarUrl);
-  }, [resolvedRoomId, avatarUrl, myPlayerId, myName]);
+    connectToGame(resolvedRoomId, myPlayerId, isSpectating);
+    if (!isSpectating) {
+      emitJoin(myName, avatarUrl);
+    }
+  }, [resolvedRoomId, avatarUrl, myPlayerId, myName, isSpectating]);
 
   // Show faction reveal when game starts (transition from LOBBY to NIGHT_BUILD)
   useEffect(() => {
@@ -129,14 +173,29 @@ function App() {
       <RoomSelector
         playerName={myName ?? 'Player'}
         selectedRoomId=""
-        onJoinRoom={(roomId) => setResolvedRoomId(roomId)}
+        onJoinRoom={(roomId) => {
+          setIsSpectating(false);
+          setResolvedRoomId(roomId);
+        }}
+        onSpectateRoom={(roomId) => {
+          setIsSpectating(true);
+          setResolvedRoomId(roomId);
+        }}
       />
     );
   }
 
+  // Spectator banner shown at top (for non-LOBBY, non-GAME_OVER phases)
+  const showSpectatorBadge = isSpectator && phase !== 'LOBBY' && phase !== 'GAME_OVER';
+
   return (
     <div className="min-h-screen bg-wolf-dark flex flex-col">
       {phase !== 'LOBBY' && phase !== 'GAME_OVER' && <GameHeader />}
+      {showSpectatorBadge && (
+        <div className="bg-wolf-mid/80 border-b border-wolf-light/20 py-1 px-4 text-center">
+          <span className="text-xs text-gray-400">🔭 観戦モード — 操作はできません</span>
+        </div>
+      )}
       <main className="flex-1 flex flex-col">
         {phase === 'LOBBY' && (
           <Lobby
@@ -152,13 +211,16 @@ function App() {
             }
           />
         )}
-        {phase === 'NIGHT_BUILD' && <NightBuild />}
-        {phase === 'NIGHT_ACTION' && <NightAction />}
+        {phase === 'NIGHT_BUILD' && (isSpectator ? <SpectatorView /> : <NightBuild />)}
+        {phase === 'NIGHT_ACTION' && (isSpectator ? <SpectatorView /> : <NightAction />)}
         {phase === 'MORNING_RESOLVE' && <MorningReport />}
         {phase === 'DAY_DISCUSSION' && <DayDiscussion />}
-        {phase === 'DAY_VOTE' && <DayVote />}
+        {phase === 'DAY_VOTE' && (isSpectator ? <SpectatorView /> : <DayVote />)}
         {phase === 'GAME_OVER' && <GameOver />}
       </main>
+      {showEliminatedPrompt && (
+        <EliminatedPrompt onSpectate={handleSpectate} onLeave={handleLeave} />
+      )}
     </div>
   );
 }
