@@ -251,7 +251,7 @@ export function Lobby() {
             {isServerDown && (
               <div className="mb-4 rounded border border-yellow-700/50 bg-yellow-900/20 p-3">
                 <p className="text-yellow-300 text-sm">サーバがスリープから起動中です。接続できると参加者が表示されます。</p>
-                <p className="text-yellow-200/90 text-xs mt-1">しばらくすると自動で再接続されます。</p>
+                <p className="text-yellow-200/90 text-xs mt-1">最大1分ほどで自動再接続される場合があります。</p>
                 <button
                   onClick={() => window.location.reload()}
                   className="mt-2 px-3 py-1 rounded text-xs border border-yellow-500/70 text-yellow-200 hover:bg-yellow-800/40 transition"
