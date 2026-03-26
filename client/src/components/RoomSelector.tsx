@@ -193,7 +193,7 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
 
   return (
     <div className="min-h-screen bg-wolf-dark flex items-center justify-center gap-10 p-6 animate-fade-in">
-      <div className="hidden md:block flex-shrink-0">
+      <div className="hidden md:block">
         <CardShowcase />
       </div>
 
