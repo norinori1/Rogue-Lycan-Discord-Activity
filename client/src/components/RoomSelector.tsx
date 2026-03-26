@@ -61,9 +61,20 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
 
   const createAndJoin = useCallback(() => {
     const id = newRoomId.trim();
-    if (!id) return;
+    if (!id || loading || error) return;
     onJoinRoom(id);
-  }, [newRoomId, onJoinRoom]);
+  }, [newRoomId, loading, error, onJoinRoom]);
+
+  const hasRoomId = !!newRoomId.trim();
+  const hasError = error !== null;
+  const isCreateAndJoinDisabled = !hasRoomId || loading || hasError;
+  const createDisabledReason = !hasRoomId
+    ? 'ルームIDを入力してください'
+    : hasError
+    ? 'サーバに接続できません'
+    : loading
+    ? '読み込み中...'
+    : undefined;
 
   return (
     <div className="min-h-screen bg-wolf-dark flex items-center justify-center gap-10 p-6 animate-fade-in">
@@ -85,11 +96,13 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
               maxLength={40}
               className="flex-1 bg-wolf-dark border border-wolf-light rounded px-3 py-2 text-sm outline-none focus:border-wolf-accent"
             />
-            <button
-              onClick={createAndJoin}
-              disabled={!newRoomId.trim()}
-              className="px-4 py-2 rounded bg-wolf-accent hover:bg-red-600 disabled:bg-gray-700 disabled:text-gray-500 transition text-sm font-semibold"
-            >
+              <button
+                onClick={createAndJoin}
+                disabled={isCreateAndJoinDisabled}
+                title={createDisabledReason}
+                aria-label="作成して参加"
+                className="px-4 py-2 rounded bg-wolf-accent hover:bg-red-600 disabled:bg-gray-700 disabled:text-gray-500 transition text-sm font-semibold"
+              >
               作成して参加
             </button>
           </div>
