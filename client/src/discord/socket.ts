@@ -12,6 +12,11 @@ let socket: Socket | null = null;
 let connectedRoomId: string | null = null;
 let connectedPlayerId: string | null = null;
 
+// Stored join info so it can be re-emitted automatically on reconnect
+// (handles server restarts / waking up from sleep)
+let pendingJoinName: string | null = null;
+let pendingJoinAvatarUrl: string | null = null;
+
 export function getSocket(): Socket | null {
   return socket;
 }
@@ -30,6 +35,8 @@ export function connectToGame(roomId: string, playerId: string): Socket {
     socket = null;
     connectedRoomId = null;
     connectedPlayerId = null;
+    pendingJoinName = null;
+    pendingJoinAvatarUrl = null;
   }
 
   const isDiscord = window.location.href.includes('discordsays');
@@ -47,11 +54,15 @@ export function connectToGame(roomId: string, playerId: string): Socket {
   connectedRoomId = roomId;
   connectedPlayerId = playerId;
 
-  const store = useGameStore.getState();
-
   socket.on('connect', () => {
     console.log('[Socket] Connected');
     useGameStore.getState().setServerDown(false);
+    // Re-emit player:join on every connect so that the player is registered
+    // even after the server restarts or wakes up from sleep (all in-memory
+    // state is lost on the server, so re-joining is necessary).
+    if (pendingJoinName !== null) {
+      socket?.emit('player:join', { name: pendingJoinName, avatarUrl: pendingJoinAvatarUrl ?? '' });
+    }
   });
 
   socket.on('state:full', (state: PublicGameState) => {
@@ -107,7 +118,14 @@ export function connectToGame(roomId: string, playerId: string): Socket {
 // ===== Emit helpers =====
 
 export function emitJoin(name: string, avatarUrl: string): void {
-  socket?.emit('player:join', { name, avatarUrl });
+  // Always persist the latest join info so it can be re-sent on reconnect.
+  pendingJoinName = name;
+  pendingJoinAvatarUrl = avatarUrl;
+  // Only emit immediately if already connected; otherwise the 'connect'
+  // event handler above will send it once the connection is established.
+  if (socket?.connected) {
+    socket.emit('player:join', { name, avatarUrl });
+  }
 }
 
 export function emitRename(name: string): void {

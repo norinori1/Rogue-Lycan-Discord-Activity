@@ -129,17 +129,21 @@ function App() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-wolf-dark">
         <div className="text-center px-6">
-          <h1 className="text-3xl font-bold text-wolf-accent mb-4">ROGUE-LYCAN</h1>
-          <p className="text-red-400 text-lg mb-2">サーバに接続できません</p>
+          <h1 className="text-3xl font-bold text-wolf-accent mb-6">ROGUE-LYCAN</h1>
+          <div className="flex justify-center mb-4">
+            <div className="w-10 h-10 border-4 border-wolf-accent border-t-transparent rounded-full animate-spin" />
+          </div>
+          <p className="text-yellow-400 text-lg mb-2">サーバが起動中です...</p>
           <p className="text-gray-400 text-sm mb-6">
-            サーバがダウンしているか、ネットワークに問題が発生しています。<br />
-            しばらく待ってから再接続してください。
+            サーバがスリープ状態から起動しています。<br />
+            自動的に再接続を試みています。<br />
+            しばらくお待ちください（最大1分程度かかる場合があります）。
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-2 px-6 py-2 bg-wolf-light rounded hover:bg-wolf-accent transition"
+            className="mt-2 px-6 py-2 bg-wolf-light rounded hover:bg-wolf-accent transition text-sm"
           >
-            再接続
+            手動で再接続
           </button>
         </div>
       </div>
