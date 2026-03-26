@@ -170,3 +170,14 @@ export function emitActionSkip(): void {
 export function emitVote(targetId: string): void {
   socket?.emit('vote:cast', { targetId });
 }
+
+export function disconnectFromGame(): void {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+    connectedRoomId = null;
+    connectedPlayerId = null;
+    pendingJoinName = null;
+    pendingJoinAvatarUrl = null;
+  }
+}

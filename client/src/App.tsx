@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { initDiscord, getAvatarUrl, type DiscordAuth } from './discord/setup';
-import { connectToGame, emitJoin } from './discord/socket';
+import { connectToGame, emitJoin, disconnectFromGame } from './discord/socket';
 import { useGameStore } from './stores/gameStore';
 import { Lobby } from './components/Lobby';
 import { RoomSelector } from './components/RoomSelector';
@@ -138,7 +138,20 @@ function App() {
     <div className="min-h-screen bg-wolf-dark flex flex-col">
       {phase !== 'LOBBY' && phase !== 'GAME_OVER' && <GameHeader />}
       <main className="flex-1 flex flex-col">
-        {phase === 'LOBBY' && <Lobby />}
+        {phase === 'LOBBY' && (
+          <Lobby
+            roomId={resolvedRoomId}
+            onBack={
+              !isDiscordMode
+                ? () => {
+                    disconnectFromGame();
+                    useGameStore.getState().reset();
+                    setResolvedRoomId(null);
+                  }
+                : undefined
+            }
+          />
+        )}
         {phase === 'NIGHT_BUILD' && <NightBuild />}
         {phase === 'NIGHT_ACTION' && <NightAction />}
         {phase === 'MORNING_RESOLVE' && <MorningReport />}
