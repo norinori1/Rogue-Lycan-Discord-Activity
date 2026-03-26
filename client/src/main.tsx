@@ -11,12 +11,13 @@ if (GA_MEASUREMENT_ID) {
     window.dataLayer.push(args);
   };
 
-  window.gtag('js', new Date());
-  window.gtag('config', GA_MEASUREMENT_ID, { send_page_view: true });
-
   const script = document.createElement('script');
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+  script.onload = () => {
+    window.gtag('js', new Date());
+    window.gtag('config', GA_MEASUREMENT_ID, { send_page_view: true });
+  };
   document.head.appendChild(script);
 }
 
