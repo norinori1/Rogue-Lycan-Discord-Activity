@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GAME_CONSTANTS } from '@shared/types';
+import { CardShowcase } from './CardShowcase';
 
 const ROOM_LIST_REFRESH_INTERVAL_MS = 10000;
 
@@ -65,7 +66,11 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
   }, [newRoomId, onJoinRoom]);
 
   return (
-    <div className="min-h-screen bg-wolf-dark flex items-center justify-center p-6">
+    <div className="min-h-screen bg-wolf-dark flex items-center justify-center gap-10 p-6 animate-fade-in">
+      <div className="hidden md:block">
+        <CardShowcase />
+      </div>
+
       <div className="w-full max-w-2xl bg-wolf-mid border border-wolf-light rounded-xl p-6">
         <h1 className="text-2xl font-bold text-wolf-accent mb-2">ルーム選択</h1>
         <p className="text-sm text-gray-400 mb-6">{playerName} として参加</p>
