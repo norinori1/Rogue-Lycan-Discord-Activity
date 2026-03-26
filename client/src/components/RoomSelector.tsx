@@ -88,11 +88,12 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
               className="flex-1 bg-wolf-dark border border-wolf-light rounded px-3 py-2 text-sm outline-none focus:border-wolf-accent"
             />
              <button
-               onClick={createAndJoin}
-               disabled={isCreateAndJoinDisabled}
-               title={error ? 'サーバ起動待ち中は作成できません' : undefined}
-               className="px-4 py-2 rounded bg-wolf-accent hover:bg-red-600 disabled:bg-gray-700 disabled:text-gray-500 transition text-sm font-semibold"
-             >
+                onClick={createAndJoin}
+                disabled={isCreateAndJoinDisabled}
+                title={error ? 'サーバ起動待ち中は作成できません' : undefined}
+                aria-label={error ? 'サーバ起動待ち中のため作成して参加は無効です' : '作成して参加'}
+                className="px-4 py-2 rounded bg-wolf-accent hover:bg-red-600 disabled:bg-gray-700 disabled:text-gray-500 transition text-sm font-semibold"
+              >
               作成して参加
             </button>
           </div>
