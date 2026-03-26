@@ -177,6 +177,14 @@ export function Lobby() {
 
   const players = publicState?.players ?? [];
   const isReady = myPlayerId ? readyPlayers.includes(myPlayerId) : false;
+  // True when socket is connected but our player hasn't appeared in the list yet
+  // (e.g. player:join was lost while server was waking up from sleep)
+  const isRegistering =
+    !isServerDown &&
+    myPlayerId !== null &&
+    publicState !== null &&
+    publicState.phase === 'LOBBY' &&
+    !players.some((p) => p.id === myPlayerId);
   const canStart =
     players.length >= GAME_CONSTANTS.MIN_PLAYERS &&
     readyPlayers.length === players.length;
@@ -258,6 +266,12 @@ export function Lobby() {
                 >
                   手動で再接続
                 </button>
+              </div>
+            )}
+            {isRegistering && (
+              <div className="mb-4 rounded border border-blue-700/50 bg-blue-900/20 p-3 flex items-center gap-2">
+                <span className="inline-block w-3 h-3 rounded-full border-2 border-blue-400 border-t-transparent animate-spin flex-shrink-0" />
+                <p className="text-blue-300 text-sm">サーバに参加登録中です。しばらくお待ちください...</p>
               </div>
             )}
             <div className="flex justify-between items-center mb-4">

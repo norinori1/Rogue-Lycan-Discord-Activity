@@ -67,6 +67,15 @@ export function connectToGame(roomId: string, playerId: string): Socket {
 
   socket.on('state:full', (state: PublicGameState) => {
     useGameStore.getState().setPublicState(state);
+    // Auto-rejoin: if we're in LOBBY but not in the player list, re-emit player:join.
+    // This handles the case where the server was sleeping and the WebSocket connected
+    // through a proxy layer before the server was fully ready (player:join was lost).
+    if (state.phase === 'LOBBY' && pendingJoinName !== null && connectedPlayerId !== null) {
+      const isInList = state.players.some((p) => p.id === connectedPlayerId);
+      if (!isInList && socket?.connected) {
+        socket.emit('player:join', { name: pendingJoinName, avatarUrl: pendingJoinAvatarUrl ?? '' });
+      }
+    }
   });
 
   socket.on('state:private', (state: PrivatePlayerState) => {
@@ -103,8 +112,14 @@ export function connectToGame(roomId: string, playerId: string): Socket {
     useGameStore.getState().setVoteCounts(data);
   });
 
-  socket.on('disconnect', () => {
-    console.log('[Socket] Disconnected');
+  socket.on('disconnect', (reason) => {
+    console.log('[Socket] Disconnected:', reason);
+    // Show the server-down banner on unexpected disconnects so the user knows
+    // the connection was lost and reconnection is in progress.
+    // 'io client disconnect' means we intentionally called socket.disconnect().
+    if (reason !== 'io client disconnect') {
+      useGameStore.getState().setServerDown(true);
+    }
   });
 
   socket.on('connect_error', (err) => {
