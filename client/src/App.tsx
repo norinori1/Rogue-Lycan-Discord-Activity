@@ -28,6 +28,7 @@ function App() {
   const privateState = useGameStore((s) => s.privateState);
   const myPlayerId = useGameStore((s) => s.myPlayerId);
   const myName = useGameStore((s) => s.myName);
+  const isServerDown = useGameStore((s) => s.isServerDown);
   const phase = publicState?.phase ?? 'LOBBY';
 
   // Initialize Discord SDK or dev mode
@@ -122,6 +123,27 @@ function App() {
 
   if (showFactionReveal && privateState) {
     return <FactionReveal faction={privateState.faction} />;
+  }
+
+  if (isServerDown) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-wolf-dark">
+        <div className="text-center px-6">
+          <h1 className="text-3xl font-bold text-wolf-accent mb-4">ROGUE-LYCAN</h1>
+          <p className="text-red-400 text-lg mb-2">サーバに接続できません</p>
+          <p className="text-gray-400 text-sm mb-6">
+            サーバがダウンしているか、ネットワークに問題が発生しています。<br />
+            しばらく待ってから再接続してください。
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 px-6 py-2 bg-wolf-light rounded hover:bg-wolf-accent transition"
+          >
+            再接続
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!isDiscordMode && !resolvedRoomId) {
