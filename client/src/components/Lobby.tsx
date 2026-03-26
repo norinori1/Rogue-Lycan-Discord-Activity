@@ -169,6 +169,7 @@ export function Lobby() {
   const myName = useGameStore((s) => s.myName);
   const setMyName = useGameStore((s) => s.setMyName);
   const readyPlayers = useGameStore((s) => s.readyPlayers);
+  const isServerDown = useGameStore((s) => s.isServerDown);
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -247,6 +248,18 @@ export function Lobby() {
           <p className="text-gray-400 mb-8 text-sm">人狼 x ローグライク カードゲーム</p>
 
           <div className="w-full bg-wolf-mid rounded-lg p-6 border border-wolf-light">
+            {isServerDown && (
+              <div className="mb-4 rounded border border-yellow-700/50 bg-yellow-900/20 p-3">
+                <p className="text-yellow-300 text-sm">サーバがスリープから起動中です。接続できると参加者が表示されます。</p>
+                <p className="text-yellow-200/90 text-xs mt-1">最大1分程度で自動再接続される場合があります。</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-2 px-3 py-1 rounded text-xs border border-yellow-500/70 text-yellow-200 hover:bg-yellow-800/40 transition"
+                >
+                  手動で再接続
+                </button>
+              </div>
+            )}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">参加者</h2>
               <span className="text-sm text-gray-400">
