@@ -13,6 +13,7 @@ import { DayVote } from './components/DayVote';
 import { GameOver } from './components/GameOver';
 import { GameHeader } from './components/GameHeader';
 import { SpectatorView } from './components/SpectatorView';
+import { EliminatedPrompt } from './components/EliminatedPrompt';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -21,10 +22,12 @@ function App() {
   const [prevPhase, setPrevPhase] = useState<string | null>(null);
   const [resolvedRoomId, setResolvedRoomId] = useState<string | null>(null);
   const [isSpectating, setIsSpectating] = useState(false);
+  const [showEliminatedPrompt, setShowEliminatedPrompt] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isDiscordMode, setIsDiscordMode] = useState(false);
 
   const hasInitialized = useRef(false);
+  const wasAlive = useRef<boolean | null>(null);
 
   const publicState = useGameStore((s) => s.publicState);
   const privateState = useGameStore((s) => s.privateState);
@@ -32,6 +35,42 @@ function App() {
   const myName = useGameStore((s) => s.myName);
   const isSpectator = useGameStore((s) => s.isSpectator);
   const phase = publicState?.phase ?? 'LOBBY';
+
+  // Detect when my player transitions from alive to eliminated (during an active game)
+  const myPlayer = publicState?.players.find((p) => p.id === myPlayerId);
+  const myPlayerIsAlive = myPlayer?.isAlive;
+  useEffect(() => {
+    if (myPlayerIsAlive === undefined || isSpectating || phase === 'LOBBY' || phase === 'GAME_OVER') return;
+
+    if (wasAlive.current === null) {
+      // First observation — record initial alive state
+      wasAlive.current = myPlayerIsAlive;
+      return;
+    }
+
+    if (wasAlive.current && !myPlayerIsAlive) {
+      // Transitioned from alive to dead
+      setShowEliminatedPrompt(true);
+    }
+    wasAlive.current = myPlayerIsAlive;
+  }, [myPlayerIsAlive, isSpectating, phase]);
+
+  // Reset wasAlive tracking when we (re)enter a room as a player
+  useEffect(() => {
+    if (phase === 'LOBBY') {
+      wasAlive.current = null;
+      setShowEliminatedPrompt(false);
+    }
+  }, [phase]);
+
+  const handleSpectate = () => {
+    setShowEliminatedPrompt(false);
+    setIsSpectating(true);
+  };
+
+  const handleLeave = () => {
+    window.location.reload();
+  };
 
   // Initialize Discord SDK or dev mode
   useEffect(() => {
@@ -166,6 +205,9 @@ function App() {
         {phase === 'DAY_VOTE' && (isSpectator ? <SpectatorView /> : <DayVote />)}
         {phase === 'GAME_OVER' && <GameOver />}
       </main>
+      {showEliminatedPrompt && (
+        <EliminatedPrompt onSpectate={handleSpectate} onLeave={handleLeave} />
+      )}
     </div>
   );
 }

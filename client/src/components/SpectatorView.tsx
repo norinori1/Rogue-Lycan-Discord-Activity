@@ -35,7 +35,7 @@ export function SpectatorView() {
 
       <div className="max-w-md mx-auto w-full space-y-2 mb-6">
         {alivePlayers.map((player) => {
-          const hpPercent = Math.max(0, (player.hp / HP_BAR_MAX) * 100);
+          const hpPercent = Math.min(100, Math.max(0, (player.hp / HP_BAR_MAX) * 100));
           const hpColor =
             player.hp > 1
               ? 'bg-green-500'
