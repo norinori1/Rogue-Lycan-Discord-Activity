@@ -19,6 +19,7 @@ interface GameStore {
   myPlayerId: string | null;
   myName: string | null;
   isConnected: boolean;
+  isServerDown: boolean;
 
   // Public state
   publicState: PublicGameState | null;
@@ -65,6 +66,7 @@ interface GameStore {
   selectTarget: (playerId: string | null) => void;
   setActionSubmitted: (submitted: boolean) => void;
   setVoteSubmitted: (submitted: boolean) => void;
+  setServerDown: (down: boolean) => void;
   reset: () => void;
 }
 
@@ -72,6 +74,7 @@ const initialState = {
   myPlayerId: null,
   myName: null,
   isConnected: false,
+  isServerDown: false,
   publicState: null,
   privateState: null,
   buildOptions: null,
@@ -128,6 +131,8 @@ export const useGameStore = create<GameStore>((set) => ({
   setActionSubmitted: (submitted) => set({ actionSubmitted: submitted }),
 
   setVoteSubmitted: (submitted) => set({ voteSubmitted: submitted }),
+
+  setServerDown: (down) => set({ isServerDown: down }),
 
   reset: () => set(initialState),
 }));

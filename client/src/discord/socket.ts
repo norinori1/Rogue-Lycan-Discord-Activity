@@ -51,6 +51,7 @@ export function connectToGame(roomId: string, playerId: string): Socket {
 
   socket.on('connect', () => {
     console.log('[Socket] Connected');
+    useGameStore.getState().setServerDown(false);
   });
 
   socket.on('state:full', (state: PublicGameState) => {
@@ -93,6 +94,11 @@ export function connectToGame(roomId: string, playerId: string): Socket {
 
   socket.on('disconnect', () => {
     console.log('[Socket] Disconnected');
+  });
+
+  socket.on('connect_error', (err) => {
+    console.error('[Socket] Connection error:', err.message);
+    useGameStore.getState().setServerDown(true);
   });
 
   return socket;
