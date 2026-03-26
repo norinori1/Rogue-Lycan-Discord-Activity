@@ -88,6 +88,19 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom, onSpectat
         <h1 className="text-2xl font-bold text-wolf-accent mb-2">ルーム選択</h1>
         <p className="text-sm text-gray-400 mb-6">{playerName} として参加</p>
 
+        {error && (
+          <div className="mb-4 rounded border border-yellow-700/50 bg-yellow-900/20 p-3">
+            <p className="text-yellow-300 text-sm">⚠️ サーバがスリープ中のため、ルームを作成・確認できません。</p>
+            <p className="text-yellow-200/90 text-xs mt-1">しばらくすると自動的に復旧します（最大1分程度）。</p>
+            <button
+              onClick={loadRooms}
+              className="mt-2 px-3 py-1 rounded text-xs border border-yellow-500/70 text-yellow-200 hover:bg-yellow-800/40 transition"
+            >
+              再試行
+            </button>
+          </div>
+        )}
+
         <div className="mb-6">
           <h2 className="text-sm font-semibold text-gray-300 mb-2">ルームを作成</h2>
           <div className="flex gap-2">

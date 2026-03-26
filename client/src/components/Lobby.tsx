@@ -163,7 +163,12 @@ function RulesModal({ onClose }: { onClose: () => void }) {
 
 // ===== Lobby =====
 
-export function Lobby() {
+interface LobbyProps {
+  roomId?: string | null;
+  onBack?: () => void;
+}
+
+export function Lobby({ roomId, onBack }: LobbyProps) {
   const publicState = useGameStore((s) => s.publicState);
   const myPlayerId = useGameStore((s) => s.myPlayerId);
   const myName = useGameStore((s) => s.myName);
@@ -253,7 +258,24 @@ export function Lobby() {
           </div>
 
           <h1 className="text-4xl font-bold text-wolf-accent mb-2">ROGUE-LYCAN</h1>
-          <p className="text-gray-400 mb-8 text-sm">人狼 x ローグライク カードゲーム</p>
+          <p className={`text-gray-400 text-sm ${roomId ? 'mb-2' : 'mb-8'}`}>人狼 x ローグライク カードゲーム</p>
+
+          {roomId && (
+            <p className="text-xs text-gray-500 mb-6">
+              ルーム: <span className="text-wolf-gold font-mono">{roomId}</span>
+            </p>
+          )}
+
+          {onBack && (
+            <div className="w-full mb-3">
+              <button
+                onClick={onBack}
+                className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition"
+              >
+                ← ルーム選択に戻る
+              </button>
+            </div>
+          )}
 
           <div className="w-full bg-wolf-mid rounded-lg p-6 border border-wolf-light">
             {isServerDown && (
