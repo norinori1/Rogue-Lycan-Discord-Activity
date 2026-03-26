@@ -12,6 +12,7 @@ import { DayDiscussion } from './components/DayDiscussion';
 import { DayVote } from './components/DayVote';
 import { GameOver } from './components/GameOver';
 import { GameHeader } from './components/GameHeader';
+import { SpectatorView } from './components/SpectatorView';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -19,6 +20,7 @@ function App() {
   const [showFactionReveal, setShowFactionReveal] = useState(false);
   const [prevPhase, setPrevPhase] = useState<string | null>(null);
   const [resolvedRoomId, setResolvedRoomId] = useState<string | null>(null);
+  const [isSpectating, setIsSpectating] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isDiscordMode, setIsDiscordMode] = useState(false);
 
@@ -28,6 +30,7 @@ function App() {
   const privateState = useGameStore((s) => s.privateState);
   const myPlayerId = useGameStore((s) => s.myPlayerId);
   const myName = useGameStore((s) => s.myName);
+  const isSpectator = useGameStore((s) => s.isSpectator);
   const phase = publicState?.phase ?? 'LOBBY';
 
   // Initialize Discord SDK or dev mode
@@ -78,9 +81,11 @@ function App() {
   useEffect(() => {
     if (!resolvedRoomId) return;
     if (!myPlayerId || !myName) return;
-    connectToGame(resolvedRoomId, myPlayerId);
-    emitJoin(myName, avatarUrl);
-  }, [resolvedRoomId, avatarUrl, myPlayerId, myName]);
+    connectToGame(resolvedRoomId, myPlayerId, isSpectating);
+    if (!isSpectating) {
+      emitJoin(myName, avatarUrl);
+    }
+  }, [resolvedRoomId, avatarUrl, myPlayerId, myName, isSpectating]);
 
   // Show faction reveal when game starts (transition from LOBBY to NIGHT_BUILD)
   useEffect(() => {
@@ -129,21 +134,36 @@ function App() {
       <RoomSelector
         playerName={myName ?? 'Player'}
         selectedRoomId=""
-        onJoinRoom={(roomId) => setResolvedRoomId(roomId)}
+        onJoinRoom={(roomId) => {
+          setIsSpectating(false);
+          setResolvedRoomId(roomId);
+        }}
+        onSpectateRoom={(roomId) => {
+          setIsSpectating(true);
+          setResolvedRoomId(roomId);
+        }}
       />
     );
   }
 
+  // Spectator banner shown at top (for non-LOBBY, non-GAME_OVER phases)
+  const showSpectatorBadge = isSpectator && phase !== 'LOBBY' && phase !== 'GAME_OVER';
+
   return (
     <div className="min-h-screen bg-wolf-dark flex flex-col">
       {phase !== 'LOBBY' && phase !== 'GAME_OVER' && <GameHeader />}
+      {showSpectatorBadge && (
+        <div className="bg-wolf-mid/80 border-b border-wolf-light/20 py-1 px-4 text-center">
+          <span className="text-xs text-gray-400">🔭 観戦モード — 操作はできません</span>
+        </div>
+      )}
       <main className="flex-1 flex flex-col">
         {phase === 'LOBBY' && <Lobby />}
-        {phase === 'NIGHT_BUILD' && <NightBuild />}
-        {phase === 'NIGHT_ACTION' && <NightAction />}
+        {phase === 'NIGHT_BUILD' && (isSpectator ? <SpectatorView /> : <NightBuild />)}
+        {phase === 'NIGHT_ACTION' && (isSpectator ? <SpectatorView /> : <NightAction />)}
         {phase === 'MORNING_RESOLVE' && <MorningReport />}
         {phase === 'DAY_DISCUSSION' && <DayDiscussion />}
-        {phase === 'DAY_VOTE' && <DayVote />}
+        {phase === 'DAY_VOTE' && (isSpectator ? <SpectatorView /> : <DayVote />)}
         {phase === 'GAME_OVER' && <GameOver />}
       </main>
     </div>

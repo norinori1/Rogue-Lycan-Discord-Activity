@@ -8,12 +8,14 @@ interface RoomSummary {
   roomId: string;
   playerCount: number;
   phase: string;
+  spectatorCount: number;
 }
 
 interface Props {
   playerName: string;
   selectedRoomId: string;
   onJoinRoom: (roomId: string) => void;
+  onSpectateRoom: (roomId: string) => void;
 }
 
 function phaseLabel(phase: string): string {
@@ -22,7 +24,7 @@ function phaseLabel(phase: string): string {
   return '進行中';
 }
 
-export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) {
+export function RoomSelector({ playerName, selectedRoomId, onJoinRoom, onSpectateRoom }: Props) {
   const [rooms, setRooms] = useState<RoomSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -128,9 +130,12 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
           <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
             {rooms.map((room) => {
               const isInLobby = room.phase === 'LOBBY';
+              const isGameOver = room.phase === 'GAME_OVER';
               const isFull = room.playerCount >= GAME_CONSTANTS.MAX_PLAYERS;
-              const isDisabled = !isInLobby || isFull;
-              const buttonTitle = !isInLobby
+              const canJoin = isInLobby && !isFull;
+              const canSpectate = !isInLobby && !isGameOver;
+              const joinDisabled = !canJoin;
+              const joinTitle = !isInLobby
                 ? '進行中のルームには参加できません'
                 : isFull
                 ? '満員です'
@@ -144,17 +149,28 @@ export function RoomSelector({ playerName, selectedRoomId, onJoinRoom }: Props) 
                   <div>
                     <div className="font-semibold text-sm">{room.roomId}</div>
                     <div className="text-xs text-gray-400">
-                      {room.playerCount}人 / {phaseLabel(room.phase)}
+                      {room.playerCount}人{room.spectatorCount > 0 ? ` / 観戦${room.spectatorCount}人` : ''} / {phaseLabel(room.phase)}
                     </div>
                   </div>
-                  <button
-                    onClick={() => onJoinRoom(room.roomId)}
-                    disabled={isDisabled}
-                    title={buttonTitle}
-                    className="px-3 py-1.5 text-xs rounded bg-wolf-accent hover:bg-red-600 disabled:bg-gray-700 disabled:text-gray-500 transition"
-                  >
-                    参加
-                  </button>
+                  <div className="flex gap-2">
+                    {canSpectate && (
+                      <button
+                        onClick={() => onSpectateRoom(room.roomId)}
+                        title="観戦する"
+                        className="px-3 py-1.5 text-xs rounded bg-wolf-mid border border-wolf-light/50 hover:border-wolf-gold hover:text-wolf-gold transition"
+                      >
+                        観戦
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onJoinRoom(room.roomId)}
+                      disabled={joinDisabled}
+                      title={joinTitle}
+                      className="px-3 py-1.5 text-xs rounded bg-wolf-accent hover:bg-red-600 disabled:bg-gray-700 disabled:text-gray-500 transition"
+                    >
+                      参加
+                    </button>
+                  </div>
                 </div>
               );
             })}

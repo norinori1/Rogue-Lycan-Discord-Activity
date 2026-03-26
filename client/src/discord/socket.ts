@@ -11,6 +11,7 @@ import type {
 let socket: Socket | null = null;
 let connectedRoomId: string | null = null;
 let connectedPlayerId: string | null = null;
+let connectedAsSpectator = false;
 
 // Stored join info so it can be re-emitted automatically on reconnect
 // (handles server restarts / waking up from sleep)
@@ -21,11 +22,12 @@ export function getSocket(): Socket | null {
   return socket;
 }
 
-export function connectToGame(roomId: string, playerId: string): Socket {
+export function connectToGame(roomId: string, playerId: string, isSpectator = false): Socket {
   if (
     socket?.connected &&
     connectedRoomId === roomId &&
-    connectedPlayerId === playerId
+    connectedPlayerId === playerId &&
+    connectedAsSpectator === isSpectator
   ) {
     return socket;
   }
@@ -35,6 +37,7 @@ export function connectToGame(roomId: string, playerId: string): Socket {
     socket = null;
     connectedRoomId = null;
     connectedPlayerId = null;
+    connectedAsSpectator = false;
     pendingJoinName = null;
     pendingJoinAvatarUrl = null;
   }
@@ -47,12 +50,16 @@ export function connectToGame(roomId: string, playerId: string): Socket {
     url = 'http://localhost:3001';
   }
 
+  const query: Record<string, string> = { roomId, playerId };
+  if (isSpectator) query.spectator = 'true';
+
   socket = io(url, {
-    query: { roomId, playerId },
+    query,
     transports: ['websocket'],
   });
   connectedRoomId = roomId;
   connectedPlayerId = playerId;
+  connectedAsSpectator = isSpectator;
 
   socket.on('connect', () => {
     console.log('[Socket] Connected');
@@ -60,7 +67,8 @@ export function connectToGame(roomId: string, playerId: string): Socket {
     // Re-emit player:join on every connect so that the player is registered
     // even after the server restarts or wakes up from sleep (all in-memory
     // state is lost on the server, so re-joining is necessary).
-    if (pendingJoinName !== null) {
+    // Spectators do not send player:join.
+    if (!isSpectator && pendingJoinName !== null) {
       socket?.emit('player:join', { name: pendingJoinName, avatarUrl: pendingJoinAvatarUrl ?? '' });
     }
   });
@@ -70,7 +78,7 @@ export function connectToGame(roomId: string, playerId: string): Socket {
     // Auto-rejoin: if we're in LOBBY but not in the player list, re-emit player:join.
     // This handles the case where the server was sleeping and the WebSocket connected
     // through a proxy layer before the server was fully ready (player:join was lost).
-    if (state.phase === 'LOBBY' && pendingJoinName !== null && connectedPlayerId !== null) {
+    if (!isSpectator && state.phase === 'LOBBY' && pendingJoinName !== null && connectedPlayerId !== null) {
       const isInList = state.players.some((p) => p.id === connectedPlayerId);
       if (!isInList && socket?.connected) {
         socket.emit('player:join', { name: pendingJoinName, avatarUrl: pendingJoinAvatarUrl ?? '' });
@@ -110,6 +118,15 @@ export function connectToGame(roomId: string, playerId: string): Socket {
 
   socket.on('vote:update', (data: Record<string, number>) => {
     useGameStore.getState().setVoteCounts(data);
+  });
+
+  socket.on('spectator:joined', () => {
+    useGameStore.getState().setSpectator(true);
+  });
+
+  socket.on('spectator:error', (data: { message: string }) => {
+    console.error('[Socket] Spectator error:', data.message);
+    useGameStore.getState().setServerDown(true);
   });
 
   socket.on('disconnect', (reason) => {

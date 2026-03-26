@@ -2,11 +2,13 @@ import { Server, Socket } from 'socket.io';
 import { GameManager } from '../game/GameManager.js';
 
 const rooms = new Map<string, GameManager>();
+const spectators = new Map<string, Set<string>>(); // roomId -> Set<socketId>
 
 export interface RoomSummary {
   roomId: string;
   playerCount: number;
   phase: string;
+  spectatorCount: number;
 }
 
 export function getRoomSummaries(): RoomSummary[] {
@@ -15,6 +17,7 @@ export function getRoomSummaries(): RoomSummary[] {
       roomId,
       playerCount: game.players.length,
       phase: game.phase,
+      spectatorCount: spectators.get(roomId)?.size ?? 0,
     }))
     .sort((a, b) => a.roomId.localeCompare(b.roomId));
 }
@@ -23,11 +26,42 @@ export function setupSocketHandlers(io: Server): void {
   io.on('connection', (socket: Socket) => {
     const roomId = socket.handshake.query.roomId as string;
     const playerId = socket.handshake.query.playerId as string;
+    const isSpectator = socket.handshake.query.spectator === 'true';
 
     if (!roomId || !playerId) {
       socket.disconnect();
       return;
     }
+
+    // ===== Spectator path =====
+    if (isSpectator) {
+      if (!rooms.has(roomId)) {
+        socket.emit('spectator:error', { message: '指定されたルームが見つかりません' });
+        socket.disconnect();
+        return;
+      }
+
+      console.log(`[Socket] Spectator ${playerId} joined room ${roomId}`);
+      socket.join(roomId);
+
+      const game = rooms.get(roomId)!;
+      if (!spectators.has(roomId)) spectators.set(roomId, new Set());
+      spectators.get(roomId)!.add(socket.id);
+
+      // Send current public state
+      socket.emit('state:full', game.getPublicState());
+      socket.emit('spectator:joined', {});
+
+      socket.on('disconnect', () => {
+        console.log(`[Socket] Spectator ${playerId} disconnected from room ${roomId}`);
+        spectators.get(roomId)?.delete(socket.id);
+        if (spectators.get(roomId)?.size === 0) spectators.delete(roomId);
+      });
+
+      return;
+    }
+
+    // ===== Player path =====
 
     console.log(`[Socket] Player ${playerId} connected to room ${roomId}`);
 
