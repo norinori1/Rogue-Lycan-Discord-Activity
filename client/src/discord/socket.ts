@@ -6,6 +6,7 @@ import type {
   CardDefinition,
   MorningEvent,
   Faction,
+  GameConfig,
 } from '@shared/types';
 
 let socket: Socket | null = null;
@@ -116,6 +117,10 @@ export function connectToGame(roomId: string, playerId: string, isSpectator = fa
     useGameStore.getState().setReadyPlayers(data.readyPlayers);
   });
 
+  socket.on('lobby:config', (data: { config: GameConfig; hostPlayerId: string | null }) => {
+    useGameStore.getState().setLobbyConfig(data.config, data.hostPlayerId);
+  });
+
   socket.on('vote:update', (data: Record<string, number>) => {
     useGameStore.getState().setVoteCounts(data);
   });
@@ -186,6 +191,10 @@ export function emitActionSkip(): void {
 
 export function emitVote(targetId: string): void {
   socket?.emit('vote:cast', { targetId });
+}
+
+export function emitGameConfig(config: Partial<GameConfig>): void {
+  socket?.emit('game:config', config);
 }
 
 export function disconnectFromGame(): void {
