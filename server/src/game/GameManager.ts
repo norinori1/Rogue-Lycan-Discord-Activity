@@ -11,6 +11,8 @@ import {
   WinResult,
   CardDefinition,
   OracleResult,
+  GameConfig,
+  defaultGameConfig,
   GAME_CONSTANTS,
 } from '../../../shared/types.js';
 import { drawCards, createCardInstance } from './CardEngine.js';
@@ -18,6 +20,7 @@ import { resolveActions } from './ActionResolver.js';
 
 export class GameManager {
   private state: GameState;
+  private gameConfig: GameConfig = defaultGameConfig();
   private readyPlayers = new Set<string>();
   private buildSelections = new Map<string, string>(); // playerId -> cardId
   private buildOptionsMap = new Map<string, CardDefinition[]>(); // playerId -> offered cards
@@ -31,6 +34,7 @@ export class GameManager {
   public onPhaseChange?: (phase: Phase, deadline: number) => void;
   public onBuildOptions?: (playerId: string, cards: CardDefinition[]) => void;
   public onStateUpdate?: () => void;
+  public onConfigUpdate?: () => void;
   public onMorningReport?: (events: MorningEvent[]) => void;
   public onGameOver?: (result: WinResult) => void;
   public onPrivateUpdate?: (playerId: string) => void;
@@ -56,6 +60,17 @@ export class GameManager {
 
   get roomId(): string {
     return this.state.roomId;
+  }
+
+  get config(): GameConfig {
+    return {
+      werewolfCount: this.gameConfig.werewolfCount,
+      enabledCards: { ...this.gameConfig.enabledCards },
+    };
+  }
+
+  get hostPlayerId(): string | null {
+    return this.state.players[0]?.id ?? null;
   }
 
   addPlayer(id: string, name: string, avatarUrl: string): boolean {
@@ -114,9 +129,32 @@ export class GameManager {
     return this.readyPlayers.has(playerId);
   }
 
+  setConfig(playerId: string, config: Partial<GameConfig>): void {
+    if (this.state.phase !== 'LOBBY') return;
+    if (this.hostPlayerId !== playerId) return;
+
+    if (config.werewolfCount !== undefined) {
+      if (config.werewolfCount === null) {
+        this.gameConfig.werewolfCount = null;
+      } else {
+        const maxWolves = Math.max(1, Math.floor((this.state.players.length - 1) / 2));
+        this.gameConfig.werewolfCount = Math.max(1, Math.min(config.werewolfCount, maxWolves));
+      }
+    }
+
+    if (config.enabledCards !== undefined) {
+      this.gameConfig.enabledCards = { ...this.gameConfig.enabledCards, ...config.enabledCards };
+    }
+
+    this.onConfigUpdate?.();
+  }
+
   private startGame(): void {
-    // Assign factions
-    const numWolves = Math.floor(this.state.players.length / 3);
+    // Assign factions using configured or auto wolf count
+    const numWolves =
+      this.gameConfig.werewolfCount !== null
+        ? Math.max(1, Math.min(this.gameConfig.werewolfCount, Math.floor((this.state.players.length - 1) / 2)))
+        : Math.floor(this.state.players.length / 3);
     const shuffled = [...this.state.players].sort(() => Math.random() - 0.5);
 
     for (let i = 0; i < shuffled.length; i++) {
@@ -174,7 +212,7 @@ export class GameManager {
 
     // Draw 3 cards for each alive player
     for (const player of this.alivePlayers()) {
-      const cards = drawCards(GAME_CONSTANTS.BUILD_CHOICES);
+      const cards = drawCards(GAME_CONSTANTS.BUILD_CHOICES, this.gameConfig.enabledCards);
       this.buildOptionsMap.set(player.id, cards);
       this.onBuildOptions?.(player.id, cards);
     }
@@ -301,7 +339,8 @@ export class GameManager {
     const { events, logs, oracleResults } = resolveActions(
       this.state.players,
       this.nightActions,
-      this.state.turn
+      this.state.turn,
+      this.gameConfig.enabledCards
     );
 
     this.state.logs.push(...logs);

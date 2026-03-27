@@ -5,6 +5,7 @@ import {
   GameLog,
   CARD_DEFINITIONS,
   GAME_CONSTANTS,
+  CardId,
 } from '../../../shared/types.js';
 import { drawRandomCardInstance } from './CardEngine.js';
 
@@ -17,7 +18,8 @@ interface ResolveResult {
 export function resolveActions(
   players: Player[],
   actions: PlayerAction[],
-  turn: number
+  turn: number,
+  enabledCards?: Record<CardId, boolean>
 ): ResolveResult {
   const events: MorningEvent[] = [];
   const logs: GameLog[] = [];
@@ -166,7 +168,7 @@ export function resolveActions(
         const cardsToAdd = 2;
         for (let i = 0; i < cardsToAdd; i++) {
           if (actor.stack.length < GAME_CONSTANTS.MAX_STACK_SIZE) {
-            actor.stack.push(drawRandomCardInstance());
+            actor.stack.push(drawRandomCardInstance(enabledCards));
           }
         }
         logs.push({

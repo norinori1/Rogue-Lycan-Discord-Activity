@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { GameManager } from '../game/GameManager.js';
+import type { GameConfig } from '../../../shared/types.js';
 
 const rooms = new Map<string, GameManager>();
 const spectators = new Map<string, Set<string>>(); // roomId -> Set<socketId>
@@ -100,6 +101,10 @@ export function setupSocketHandlers(io: Server): void {
       broadcastState(game, io);
     });
 
+    socket.on('game:config', (data: Partial<GameConfig>) => {
+      game.setConfig(playerId, data);
+    });
+
     socket.on('build:select', (data: { cardId: string }) => {
       game.selectBuildCard(playerId, data.cardId);
     });
@@ -170,6 +175,13 @@ function setupGameCallbacks(game: GameManager, io: Server): void {
     broadcastState(game, io);
   };
 
+  game.onConfigUpdate = () => {
+    io.to(game.roomId).emit('lobby:config', {
+      config: game.config,
+      hostPlayerId: game.hostPlayerId,
+    });
+  };
+
   game.onMorningReport = (events) => {
     io.to(game.roomId).emit('morning:report', { events });
   };
@@ -206,10 +218,14 @@ function broadcastState(game: GameManager, io: Server): void {
   const publicState = game.getPublicState();
   io.to(game.roomId).emit('state:full', publicState);
 
-  // Also send ready status in lobby
+  // Also send ready status and config in lobby
   if (game.phase === 'LOBBY') {
     const readyPlayers = Array.from(game.getReadyPlayers());
     io.to(game.roomId).emit('lobby:ready', { readyPlayers });
+    io.to(game.roomId).emit('lobby:config', {
+      config: game.config,
+      hostPlayerId: game.hostPlayerId,
+    });
   }
 
   // Send private state to each player

@@ -237,6 +237,22 @@ export interface PlayerAction {
   transferCardInstanceId?: string;
 }
 
+// ===== Game Config =====
+
+export interface GameConfig {
+  werewolfCount: number | null; // null = auto (floor(players/3))
+  enabledCards: Record<CardId, boolean>;
+}
+
+export function defaultGameConfig(): GameConfig {
+  return {
+    werewolfCount: null,
+    enabledCards: Object.fromEntries(
+      (Object.keys(CARD_DEFINITIONS) as CardId[]).map((k) => [k, true])
+    ) as Record<CardId, boolean>,
+  };
+}
+
 // ===== Constants =====
 
 export const GAME_CONSTANTS = {
