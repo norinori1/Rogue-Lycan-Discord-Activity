@@ -7,7 +7,9 @@ import type {
   MorningEvent,
   Phase,
   Faction,
+  GameConfig,
 } from '@shared/types';
+import { defaultGameConfig } from '@shared/types';
 
 interface GameOverInfo {
   winner: Faction;
@@ -39,6 +41,8 @@ interface GameStore {
 
   // Lobby
   readyPlayers: string[];
+  gameConfig: GameConfig;
+  hostPlayerId: string | null;
 
   // Game over
   gameOverInfo: GameOverInfo | null;
@@ -62,6 +66,7 @@ interface GameStore {
     players: { id: string; name: string; faction: Faction; isAlive: boolean }[]
   ) => void;
   setReadyPlayers: (playerIds: string[]) => void;
+  setLobbyConfig: (config: GameConfig, hostPlayerId: string | null) => void;
   setVoteCounts: (counts: Record<string, number>) => void;
   selectCard: (card: CardInstance | null) => void;
   selectTarget: (playerId: string | null) => void;
@@ -84,6 +89,8 @@ const initialState = {
   morningEvents: null,
   voteCounts: {},
   readyPlayers: [],
+  gameConfig: defaultGameConfig(),
+  hostPlayerId: null,
   gameOverInfo: null,
   selectedCard: null,
   selectedTarget: null,
@@ -124,6 +131,8 @@ export const useGameStore = create<GameStore>((set) => ({
   setGameOver: (winner, players) => set({ gameOverInfo: { winner, players } }),
 
   setReadyPlayers: (playerIds) => set({ readyPlayers: playerIds }),
+
+  setLobbyConfig: (config, hostPlayerId) => set({ gameConfig: config, hostPlayerId }),
 
   setVoteCounts: (counts) => set({ voteCounts: counts }),
 

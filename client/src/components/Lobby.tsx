@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useGameStore } from '../stores/gameStore';
-import { emitReady, emitRename } from '../discord/socket';
+import { emitReady, emitRename, emitGameConfig } from '../discord/socket';
 import { GAME_CONSTANTS, CARD_DEFINITIONS } from '@shared/types';
+import type { CardId } from '@shared/types';
 import { CardShowcase } from './CardShowcase';
 
 // ===== Rules Modal =====
@@ -161,6 +162,130 @@ function RulesModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ===== Game Config Panel =====
+
+interface GameConfigPanelProps {
+  isHost: boolean;
+  playerCount: number;
+}
+
+function GameConfigPanel({ isHost, playerCount }: GameConfigPanelProps) {
+  const gameConfig = useGameStore((s) => s.gameConfig);
+  const [open, setOpen] = useState(false);
+
+  const maxWolves = Math.max(1, Math.floor((playerCount - 1) / 2));
+  const autoWolfCount =
+    playerCount >= GAME_CONSTANTS.MIN_PLAYERS ? Math.floor(playerCount / 3) : null;
+
+  const handleWerewolfCount = (value: number | null) => {
+    emitGameConfig({ werewolfCount: value });
+  };
+
+  const handleCardToggle = (cardId: CardId, enabled: boolean) => {
+    emitGameConfig({ enabledCards: { ...gameConfig.enabledCards, [cardId]: enabled } });
+  };
+
+  const enabledCount = Object.values(gameConfig.enabledCards).filter(Boolean).length;
+
+  return (
+    <div className="w-full mt-4 border border-wolf-light rounded-lg overflow-hidden">
+      <button
+        className="w-full flex items-center justify-between px-4 py-3 bg-wolf-dark/60 hover:bg-wolf-dark/80 transition text-sm font-medium"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="flex items-center gap-2">
+          ⚙️ ゲーム設定
+          {isHost && (
+            <span className="text-xs text-wolf-gold font-normal">(ホスト)</span>
+          )}
+        </span>
+        <span className="text-gray-400 text-xs">{open ? '▲ 閉じる' : '▼ 開く'}</span>
+      </button>
+
+      {open && (
+        <div className="px-4 py-4 space-y-5 bg-wolf-dark/40">
+          {/* Werewolf count */}
+          <div>
+            <div className="text-xs font-semibold text-wolf-gold mb-2">🐺 人狼の数</div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => isHost && handleWerewolfCount(null)}
+                disabled={!isHost}
+                className={`px-3 py-1 rounded text-xs border transition ${
+                  gameConfig.werewolfCount === null
+                    ? 'bg-wolf-accent border-wolf-accent text-white'
+                    : 'border-gray-600 text-gray-300 hover:border-gray-400'
+                } ${!isHost ? 'cursor-default opacity-70' : ''}`}
+              >
+                自動{autoWolfCount !== null ? ` (${autoWolfCount}人)` : ''}
+              </button>
+              {Array.from({ length: maxWolves }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => isHost && handleWerewolfCount(n)}
+                  disabled={!isHost}
+                  className={`px-3 py-1 rounded text-xs border transition ${
+                    gameConfig.werewolfCount === n
+                      ? 'bg-wolf-accent border-wolf-accent text-white'
+                      : 'border-gray-600 text-gray-300 hover:border-gray-400'
+                  } ${!isHost ? 'cursor-default opacity-70' : ''}`}
+                >
+                  {n}人
+                </button>
+              ))}
+            </div>
+            {!isHost && (
+              <p className="text-xs text-gray-500 mt-1">ホストのみ変更できます</p>
+            )}
+          </div>
+
+          {/* Card toggles */}
+          <div>
+            <div className="text-xs font-semibold text-wolf-gold mb-2">
+              🃏 使用するカード{' '}
+              <span className="text-gray-400 font-normal">
+                ({enabledCount}/{Object.keys(CARD_DEFINITIONS).length})
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {(Object.keys(CARD_DEFINITIONS) as CardId[]).map((cardId) => {
+                const def = CARD_DEFINITIONS[cardId];
+                const enabled = gameConfig.enabledCards[cardId] !== false;
+                return (
+                  <button
+                    key={cardId}
+                    onClick={() => isHost && handleCardToggle(cardId, !enabled)}
+                    disabled={!isHost}
+                    className={`flex items-center gap-2 p-2 rounded border text-xs text-left transition ${
+                      enabled
+                        ? 'border-wolf-light/60 bg-wolf-mid/60 text-white'
+                        : 'border-gray-700/60 bg-wolf-dark/40 text-gray-500'
+                    } ${!isHost ? 'cursor-default' : 'hover:border-wolf-accent/60'}`}
+                  >
+                    <span
+                      className={`w-4 h-4 rounded-sm border flex items-center justify-center flex-shrink-0 text-[10px] ${
+                        enabled
+                          ? 'bg-wolf-accent border-wolf-accent text-white'
+                          : 'border-gray-600'
+                      }`}
+                    >
+                      {enabled ? '✓' : ''}
+                    </span>
+                    <span className="truncate">{def.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {!isHost && (
+              <p className="text-xs text-gray-500 mt-1">ホストのみ変更できます</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ===== Lobby =====
 
 interface LobbyProps {
@@ -175,6 +300,7 @@ export function Lobby({ roomId, onBack }: LobbyProps) {
   const setMyName = useGameStore((s) => s.setMyName);
   const readyPlayers = useGameStore((s) => s.readyPlayers);
   const isServerDown = useGameStore((s) => s.isServerDown);
+  const hostPlayerId = useGameStore((s) => s.hostPlayerId);
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -182,6 +308,7 @@ export function Lobby({ roomId, onBack }: LobbyProps) {
 
   const players = publicState?.players ?? [];
   const isReady = myPlayerId ? readyPlayers.includes(myPlayerId) : false;
+  const isHost = !!myPlayerId && myPlayerId === hostPlayerId;
   // True when socket is connected but our player hasn't appeared in the list yet
   // (e.g. player:join was lost while server was waking up from sleep)
   const isRegistering =
@@ -334,6 +461,9 @@ export function Lobby({ roomId, onBack }: LobbyProps) {
                 </p>
               )}
             </div>
+
+            {/* Game config panel */}
+            <GameConfigPanel isHost={isHost} playerCount={players.length} />
 
             {!isReady ? (
               <button
