@@ -47,6 +47,7 @@ export class GameManager {
       players: [],
       logs: [],
       phaseDeadline: 0,
+      activeEnvironments: [],
     };
   }
 
@@ -210,9 +211,17 @@ export class GameManager {
     const deadline = Date.now() + GAME_CONSTANTS.NIGHT_BUILD_TIME;
     this.state.phaseDeadline = deadline;
 
-    // Draw 3 cards for each alive player
+    // ECONOMY effect: choices 3 -> 4
+    const choices = this.state.activeEnvironments.includes('ECONOMY')
+      ? GAME_CONSTANTS.BUILD_CHOICES + 1
+      : GAME_CONSTANTS.BUILD_CHOICES;
+
+    // Clear environments for the new turn after checking ECONOMY
+    this.state.activeEnvironments = [];
+
+    // Draw cards for each alive player
     for (const player of this.alivePlayers()) {
-      const cards = drawCards(GAME_CONSTANTS.BUILD_CHOICES, this.gameConfig.enabledCards);
+      const cards = drawCards(choices, this.gameConfig.enabledCards);
       this.buildOptionsMap.set(player.id, cards);
       this.onBuildOptions?.(player.id, cards);
     }
@@ -336,7 +345,7 @@ export class GameManager {
       this.phaseTimer = null;
     }
 
-    const { events, logs, oracleResults } = resolveActions(
+    const { events, logs, oracleResults, activeEnvironments } = resolveActions(
       this.state.players,
       this.nightActions,
       this.state.turn,
@@ -344,6 +353,7 @@ export class GameManager {
     );
 
     this.state.logs.push(...logs);
+    this.state.activeEnvironments = activeEnvironments;
 
     // Store oracle results
     for (const [playerId, result] of oracleResults) {
@@ -390,7 +400,12 @@ export class GameManager {
   // ===== DAY DISCUSSION =====
 
   private beginDayDiscussion(): void {
-    const deadline = Date.now() + GAME_CONSTANTS.DAY_DISCUSSION_TIME;
+    const isMartialLaw = this.state.activeEnvironments.includes('MARTIAL_LAW');
+    const duration = isMartialLaw
+      ? GAME_CONSTANTS.DAY_DISCUSSION_TIME / 2
+      : GAME_CONSTANTS.DAY_DISCUSSION_TIME;
+
+    const deadline = Date.now() + duration;
     this.state.phaseDeadline = deadline;
 
     this.onPhaseChange?.('DAY_DISCUSSION', deadline);
@@ -408,7 +423,7 @@ export class GameManager {
       } else {
         this.transitionTo('DAY_VOTE');
       }
-    }, GAME_CONSTANTS.DAY_DISCUSSION_TIME);
+    }, duration);
   }
 
   // ===== DAY VOTE =====
@@ -540,6 +555,7 @@ export class GameManager {
         })
       ),
       logs: this.state.logs.filter((l) => !l.isPrivate),
+      activeEnvironments: this.state.activeEnvironments,
     };
   }
 

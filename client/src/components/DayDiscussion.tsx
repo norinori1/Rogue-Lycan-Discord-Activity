@@ -1,3 +1,4 @@
+import { CARD_DEFINITIONS } from '@shared/types';
 import { useGameStore } from '../stores/gameStore';
 
 export function DayDiscussion() {
@@ -11,6 +12,19 @@ export function DayDiscussion() {
 
   return (
     <div className="flex-1 flex flex-col p-6 animate-fade-in">
+      {publicState.activeEnvironments.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-2 mb-4">
+          {publicState.activeEnvironments.map((envId) => (
+            <div
+              key={envId}
+              className="bg-wolf-gold/20 border border-wolf-gold text-wolf-gold px-3 py-1 rounded-full text-xs font-bold animate-pulse"
+            >
+              【環境: {CARD_DEFINITIONS[envId].name}】
+            </div>
+          ))}
+        </div>
+      )}
+
       <h2 className="text-xl font-bold mb-1 text-center">議論フェーズ</h2>
       <p className="text-gray-400 text-sm mb-6 text-center">
         ボイスチャットで話し合ってください
@@ -78,7 +92,14 @@ export function DayDiscussion() {
               .slice(-10)
               .reverse()
               .map((log, i) => (
-                <div key={i} className="text-sm text-gray-400">
+                <div
+                  key={i}
+                  className={`text-sm ${
+                    log.type === 'environment'
+                      ? 'text-wolf-gold font-bold border-l-2 border-wolf-gold pl-2 my-1'
+                      : 'text-gray-400'
+                  }`}
+                >
                   <span className="text-gray-600">[{log.turn}日目]</span>{' '}
                   {log.message}
                 </div>
