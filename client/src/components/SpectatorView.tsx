@@ -1,3 +1,4 @@
+import { CARD_DEFINITIONS } from '@shared/types';
 import { useGameStore } from '../stores/gameStore';
 
 const PHASE_LABELS: Record<string, string> = {
@@ -22,6 +23,18 @@ export function SpectatorView() {
 
   return (
     <div className="flex-1 flex flex-col p-6 animate-fade-in">
+      {publicState.activeEnvironments && publicState.activeEnvironments.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-2 mb-4">
+          {publicState.activeEnvironments.map((envId) => (
+            <div
+              key={envId}
+              className="bg-wolf-gold/20 border border-wolf-gold text-wolf-gold px-3 py-1 rounded-full text-xs font-bold animate-pulse"
+            >
+              【環境: {CARD_DEFINITIONS[envId].name}】
+            </div>
+          ))}
+        </div>
+      )}
       <div className="text-center mb-6">
         <div className="inline-flex items-center gap-2 text-gray-400 text-sm mb-1">
           <span>🔭</span>

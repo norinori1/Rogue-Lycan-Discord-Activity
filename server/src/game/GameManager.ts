@@ -212,7 +212,7 @@ export class GameManager {
     this.state.phaseDeadline = deadline;
 
     // ECONOMY effect: choices 3 -> 4
-    const choices = this.state.activeEnvironments.includes('ECONOMY')
+    const choices = (this.state.activeEnvironments || []).includes('ECONOMY')
       ? GAME_CONSTANTS.BUILD_CHOICES + 1
       : GAME_CONSTANTS.BUILD_CHOICES;
 
@@ -400,7 +400,7 @@ export class GameManager {
   // ===== DAY DISCUSSION =====
 
   private beginDayDiscussion(): void {
-    const isMartialLaw = this.state.activeEnvironments.includes('MARTIAL_LAW');
+    const isMartialLaw = (this.state.activeEnvironments || []).includes('MARTIAL_LAW');
     const duration = isMartialLaw
       ? GAME_CONSTANTS.DAY_DISCUSSION_TIME / 2
       : GAME_CONSTANTS.DAY_DISCUSSION_TIME;
