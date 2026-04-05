@@ -13,6 +13,7 @@ interface ResolveResult {
   events: MorningEvent[];
   logs: GameLog[];
   oracleResults: Map<string, { targetId: string; targetName: string; faction: string }>;
+  activeEnvironments: CardId[];
 }
 
 export function resolveActions(
@@ -24,6 +25,7 @@ export function resolveActions(
   const events: MorningEvent[] = [];
   const logs: GameLog[] = [];
   const oracleResults = new Map<string, { targetId: string; targetName: string; faction: string }>();
+  const activeEnvironments: CardId[] = [];
 
   const playerMap = new Map(players.map((p) => [p.id, p]));
   const protectedPlayers = new Set<string>();
@@ -32,9 +34,25 @@ export function resolveActions(
   // Sort actions by priority
   const sorted = [...actions].sort((a, b) => getPriority(a.cardId) - getPriority(b.cardId));
 
+  // Collect environment cards first
+  for (const action of sorted) {
+    const cardDef = CARD_DEFINITIONS[action.cardId];
+    if (cardDef.attribute.includes('environment')) {
+      if (!activeEnvironments.includes(action.cardId)) {
+        activeEnvironments.push(action.cardId);
+      }
+    }
+  }
+
+  const isIsolated = activeEnvironments.includes('ISOLATION');
+  const isForest = activeEnvironments.includes('FOREST');
+  const isBattlefield = activeEnvironments.includes('BATTLEFIELD');
+
   for (const action of sorted) {
     const actor = playerMap.get(action.playerId);
     if (!actor || !actor.isAlive) continue;
+
+    const cardDef = CARD_DEFINITIONS[action.cardId];
 
     // Remove used card from stack
     const cardIdx = actor.stack.findIndex((c) => c.instanceId === action.cardInstanceId);
@@ -48,6 +66,33 @@ export function resolveActions(
       actor.stack.splice(cardIdx, 1);
       continue;
     }
+
+    // Check Isolation for distribution cards
+    if (isIsolated && cardDef.attribute.includes('distribution')) {
+      logs.push({
+        turn,
+        phase: 'NIGHT_ACTION',
+        message: `${actor.name} の「${cardDef.name}」は鎖国により不発に終わった`,
+        isPrivate: false,
+      });
+      actor.stack.splice(cardIdx, 1);
+      continue;
+    }
+
+    // Check Forest for investigate cards
+    if (isForest && cardDef.attribute.includes('investigate')) {
+      if (Math.random() < 0.5) {
+        logs.push({
+          turn,
+          phase: 'NIGHT_ACTION',
+          message: `${actor.name} の「${cardDef.name}」は濃密の森により失敗した`,
+          isPrivate: false,
+        });
+        actor.stack.splice(cardIdx, 1);
+        continue;
+      }
+    }
+
     actor.stack.splice(cardIdx, 1);
 
     const target = action.targetId ? playerMap.get(action.targetId) : null;
@@ -179,6 +224,33 @@ export function resolveActions(
         });
         break;
       }
+
+      case 'ECONOMY':
+      case 'FOREST':
+      case 'BATTLEFIELD':
+      case 'ISOLATION':
+      case 'SALVATION':
+      case 'MARTIAL_LAW': {
+        logs.push({
+          turn,
+          phase: 'NIGHT_ACTION',
+          message: `環境が「${cardDef.name}」に変化した`,
+          isPrivate: false,
+          type: 'environment',
+        });
+        break;
+      }
+    }
+  }
+
+  // Salvation effect: HP+1 for survivors
+  if (activeEnvironments.includes('SALVATION')) {
+    for (const player of players) {
+      if (player.isAlive) {
+        if (player.hp < player.maxHp) {
+          player.hp += 1;
+        }
+      }
     }
   }
 
@@ -187,7 +259,7 @@ export function resolveActions(
     const target = playerMap.get(targetId);
     if (!target) continue;
 
-    if (protectedPlayers.has(targetId)) {
+    if (protectedPlayers.has(targetId) && !isBattlefield) {
       events.push({
         type: 'protected',
         message: `${target.name} は護衛により守られた`,
@@ -223,11 +295,18 @@ export function resolveActions(
     }
   }
 
-  return { events, logs, oracleResults };
+  return { events, logs, oracleResults, activeEnvironments };
 }
 
 function getPriority(cardId: string): number {
   switch (cardId) {
+    case 'ECONOMY':
+    case 'FOREST':
+    case 'BATTLEFIELD':
+    case 'ISOLATION':
+    case 'SALVATION':
+    case 'MARTIAL_LAW':
+      return 0; // Environments apply first
     case 'TRANSFER':
     case 'FORGERY':
       return 1;

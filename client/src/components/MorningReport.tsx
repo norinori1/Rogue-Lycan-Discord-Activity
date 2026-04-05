@@ -1,3 +1,4 @@
+import { CARD_DEFINITIONS } from '@shared/types';
 import { useGameStore } from '../stores/gameStore';
 
 export function MorningReport() {
@@ -9,6 +10,18 @@ export function MorningReport() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 animate-fade-in">
+      {publicState?.activeEnvironments && publicState.activeEnvironments.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-2 mb-4">
+          {publicState.activeEnvironments.map((envId) => (
+            <div
+              key={envId}
+              className="bg-wolf-gold/20 border border-wolf-gold text-wolf-gold px-3 py-1 rounded-full text-xs font-bold animate-pulse"
+            >
+              【環境: {CARD_DEFINITIONS[envId].name}】
+            </div>
+          ))}
+        </div>
+      )}
       <h2 className="text-xl font-bold mb-6">朝がやってきた</h2>
 
       <div className="w-full max-w-md space-y-3 mb-6">

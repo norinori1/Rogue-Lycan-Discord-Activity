@@ -15,6 +15,7 @@ const ATTR_COLORS: Record<string, string> = {
   political: 'border-yellow-500 bg-yellow-900/20',
   distribution: 'border-cyan-500 bg-cyan-900/20',
   sabotage: 'border-orange-500 bg-orange-900/20',
+  environment: 'border-wolf-gold bg-wolf-gold/20',
 };
 
 const ATTR_LABELS: Record<string, string> = {
@@ -25,6 +26,7 @@ const ATTR_LABELS: Record<string, string> = {
   political: '政治',
   distribution: '流通',
   sabotage: '妨害',
+  environment: '環境',
 };
 
 export function CardDefDisplay({ cardId, selected, onClick, size = 'md' }: CardDefProps) {

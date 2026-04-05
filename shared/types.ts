@@ -9,7 +9,13 @@ export type CardId =
   | 'ELECTION'
   | 'TRANSFER'
   | 'FORGERY'
-  | 'GREED';
+  | 'GREED'
+  | 'ECONOMY'
+  | 'FOREST'
+  | 'BATTLEFIELD'
+  | 'ISOLATION'
+  | 'SALVATION'
+  | 'MARTIAL_LAW';
 
 export type CardAttribute =
   | 'attack'
@@ -18,7 +24,8 @@ export type CardAttribute =
   | 'investigate'
   | 'political'
   | 'distribution'
-  | 'sabotage';
+  | 'sabotage'
+  | 'environment';
 
 export interface CardDefinition {
   id: CardId;
@@ -46,6 +53,12 @@ export const CARD_WEIGHTS: Record<CardId, number> = {
   TRANSFER: 2,
   FORGERY: 1,
   GREED: 2,
+  ECONOMY: 1,
+  FOREST: 1,
+  BATTLEFIELD: 1,
+  ISOLATION: 1,
+  SALVATION: 1,
+  MARTIAL_LAW: 1,
 };
 
 export const CARD_DEFINITIONS: Record<CardId, CardDefinition> = {
@@ -130,6 +143,60 @@ export const CARD_DEFINITIONS: Record<CardId, CardDefinition> = {
     targetType: 'self',
     description: 'ランダムにカードを2枚手札に加える',
   },
+  ECONOMY: {
+    id: 'ECONOMY',
+    name: '高度経済',
+    nameEn: 'High Economy',
+    attribute: ['environment'],
+    rarity: 'R',
+    targetType: 'none',
+    description: '次の夜、全員のカード構築フェーズでの選択肢を3枚→4枚に増やす',
+  },
+  FOREST: {
+    id: 'FOREST',
+    name: '濃密の森',
+    nameEn: 'Dense Forest',
+    attribute: ['environment'],
+    rarity: 'R',
+    targetType: 'none',
+    description: '調査属性カードが50%の確率で失敗する',
+  },
+  BATTLEFIELD: {
+    id: 'BATTLEFIELD',
+    name: '古戦場',
+    nameEn: 'Ancient Battlefield',
+    attribute: ['environment'],
+    rarity: 'R',
+    targetType: 'none',
+    description: '攻撃属性カードは防御属性カードを無効化する',
+  },
+  ISOLATION: {
+    id: 'ISOLATION',
+    name: '鎖国',
+    nameEn: 'Isolation',
+    attribute: ['environment'],
+    rarity: 'R',
+    targetType: 'none',
+    description: '流通属性カードがすべて不発になる',
+  },
+  SALVATION: {
+    id: 'SALVATION',
+    name: '救済の雨',
+    nameEn: 'Rain of Salvation',
+    attribute: ['environment'],
+    rarity: 'R',
+    targetType: 'none',
+    description: '翌朝、生存者全員のHPを+1する（上限突破不可）',
+  },
+  MARTIAL_LAW: {
+    id: 'MARTIAL_LAW',
+    name: '戒厳令',
+    nameEn: 'Martial Law',
+    attribute: ['environment'],
+    rarity: 'R',
+    targetType: 'none',
+    description: '翌昼フェーズ、全員の発言可能時間を半分に制限する',
+  },
 };
 
 // ===== Game State =====
@@ -163,6 +230,7 @@ export interface GameLog {
   message: string;
   isPrivate: boolean;
   targetPlayerId?: string;
+  type?: 'normal' | 'environment';
 }
 
 export interface GameState {
@@ -172,6 +240,7 @@ export interface GameState {
   players: Player[];
   logs: GameLog[];
   phaseDeadline: number;
+  activeEnvironments: CardId[];
 }
 
 // ===== Public / Private State =====
@@ -192,6 +261,7 @@ export interface PublicGameState {
   phaseDeadline: number;
   players: PublicPlayer[];
   logs: GameLog[];
+  activeEnvironments: CardId[];
 }
 
 export interface OracleResult {
