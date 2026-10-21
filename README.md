@@ -71,7 +71,7 @@ rogue-lycan/
 
 ### 前提条件
 
-- Node.js 20 以上
+- Node.js 24.22.1 以上の 24.x LTS（2026-10-21 セキュリティ修正版）
 - npm
 - Discord Developer Portal でアプリを作成済み
 
