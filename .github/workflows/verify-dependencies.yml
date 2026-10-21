@@ -1,0 +1,33 @@
+name: Verify locked npm dependencies
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [client, server]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up patched Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.1'
+          cache: npm
+          cache-dependency-path: ${{ matrix.package }}/package-lock.json
+      - name: Install exactly from lockfile
+        working-directory: ${{ matrix.package }}
+        run: npm ci
+      - name: Build
+        working-directory: ${{ matrix.package }}
+        run: npm run build
